@@ -12,7 +12,6 @@ Nền tảng thương mại điện tử trung gian kết nối các xưởng g�
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
 - [Cấu trúc thư mục](#cấu-trúc-thư-mục)
 - [Sơ đồ dữ liệu (ERD)](#sơ-đồ-dữ-liệu-erd)
-- [Luồng nghiệp vụ quan trọng](#luồng-nghiệp-vụ-quan-trọng)
 - [Cài đặt & chạy dự án](#cài-đặt--chạy-dự-án)
 - [Biến môi trường](#biến-môi-trường)
 - [Ghi chú kỹ thuật quan trọng](#ghi-chú-kỹ-thuật-quan-trọng)
@@ -227,37 +226,6 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 - `TOUR_SLOT` tách khỏi `TOUR_BOOKING` để quản lý `slots_left` độc lập — cần khóa transaction khi nhiều khách đặt cùng lúc.
 - `REVENUE_RECORD` lưu theo `period` phục vụ đối soát và thống kê toàn sàn mà không cần tính lại từ `ORDER`.
 - `CONTACT_MESSAGE` lưu form liên hệ/feedback, Admin đánh dấu trạng thái xử lý.
-
-## Luồng nghiệp vụ quan trọng
-
-### Thanh toán VietQR (UC-15)
-
-```mermaid
-sequenceDiagram
-    actor C as Khách hàng
-    participant A as FastAPI
-    participant B as Ngân hàng
-    C->>A: POST /api/v1/orders (từ giỏ hàng)
-    A-->>C: order_code + tổng tiền + ảnh QR VietQR
-    C->>B: Chuyển khoản đúng nội dung "TT + order_code"
-    B-->>A: Webhook giao dịch (Casso/SeedTech)
-    A->>A: Đối soát số tiền + nội dung → status = paid
-    Note over A,B: Không có webhook → Admin xác nhận thủ công
-```
-
-### Trừ slot tour chống race condition (UC-24)
-
-```mermaid
-sequenceDiagram
-    actor C as Khách hàng
-    participant A as FastAPI
-    participant D as Postgres
-    C->>A: POST /api/v1/tours/bookings
-    A->>D: BEGIN; SELECT slots_left ... FOR UPDATE
-    A->>D: UPDATE slots_left = slots_left - 1
-    D-->>A: COMMIT
-    A-->>C: Vé tour + mã QR check-in
-```
 
 ## Cài đặt & chạy dự án
 
