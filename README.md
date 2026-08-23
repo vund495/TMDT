@@ -226,6 +226,10 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 - `TOUR_SLOT` tách khỏi `TOUR_BOOKING` để quản lý `slots_left` độc lập — cần khóa transaction khi nhiều khách đặt cùng lúc.
 - `REVENUE_RECORD` lưu theo `period` phục vụ đối soát và thống kê toàn sàn mà không cần tính lại từ `ORDER`.
 - `CONTACT_MESSAGE` lưu form liên hệ/feedback, Admin đánh dấu trạng thái xử lý.
+## 4. Sơ đồ Luồng Hoạt động (Activity Diagrams)
+
+### 4.1. Luồng Mua hàng & Thanh toán
+![Luồng Mua hàng](C:\Users\MINH\Downloads\Mua & Thanh toán Sản phẩm.drawio.svg)
 
 ## Cài đặt & chạy dự án
 
