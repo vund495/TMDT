@@ -229,7 +229,7 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 ## 4. Sơ đồ Luồng Hoạt động (Activity Diagrams)
 
 ### 4.1. Luồng Mua hàng & Thanh toán
-![Luồng Mua hàng](C:\Users\MINH\Downloads\Mua & Thanh toán Sản phẩm.drawio.svg)
+![Luồng Mua hàng]("C:\Users\MINH\Downloads\Mua & Thanh toán Sản phẩm.drawio.png")
 
 ## Cài đặt & chạy dự án
 
