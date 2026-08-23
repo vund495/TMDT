@@ -228,8 +228,8 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 - `CONTACT_MESSAGE` lưu form liên hệ/feedback, Admin đánh dấu trạng thái xử lý.
 ## 4. Sơ đồ Luồng Hoạt động (Activity Diagrams)
 
-### 4.1. Luồng Mua hàng & Thanh toán
-![Luồng Mua hàng]("C:\Users\MINH\Downloads\Mua & Thanh toán Sản phẩm.drawio.png")
+### 4.1. E-Commerce & Payment Flow
+![E-Commerce Flow](./docs/images/ecommerce-flow.png)
 
 ## Cài đặt & chạy dự án
 
