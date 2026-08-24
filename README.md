@@ -230,7 +230,8 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 
 ### 4.1. E-Commerce & Payment Flow
 ![E-Commerce Flow](./ecommerce-flow.png)
-
+### 4.2. Tour-booking-flow
+![E-Commerce Flow](./tour-booking-flow.png)
 ## Cài đặt & chạy dự án
 
 ### Yêu cầu
