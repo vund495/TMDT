@@ -229,7 +229,7 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 ## 4. Sơ đồ Luồng Hoạt động (Activity Diagrams)
 
 ### 4.1. E-Commerce & Payment Flow
-![E-Commerce Flow](./docs/images/ecommerce-flow.png)
+![E-Commerce Flow](./ecommerce-flow.png)
 
 ## Cài đặt & chạy dự án
 
