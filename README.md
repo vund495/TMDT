@@ -232,6 +232,10 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 ![E-Commerce Flow](./ecommerce-flow.png)
 ### 4.2. Tour-booking-flow
 ![E-Commerce Flow](./O2O-Tour-Booking-Flow.png)
+### 4.3. Dispute & Compensation Activity Diagram
+![E-Commerce Flow](./dispute-Flow.png)
+### 4.4. Admin & Operations Activity Diagram
+![E-Commerce Flow](./Admin & Operations Activity Diagram.png)
 ## Cài đặt & chạy dự án
 
 ### Yêu cầu
