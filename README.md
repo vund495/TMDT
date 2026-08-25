@@ -226,16 +226,30 @@ Các bảng chính: `USER`, `WORKSHOP`, `PRODUCT`, `PRODUCT_PASSPORT`, `CART_ITE
 - `TOUR_SLOT` tách khỏi `TOUR_BOOKING` để quản lý `slots_left` độc lập — cần khóa transaction khi nhiều khách đặt cùng lúc.
 - `REVENUE_RECORD` lưu theo `period` phục vụ đối soát và thống kê toàn sàn mà không cần tính lại từ `ORDER`.
 - `CONTACT_MESSAGE` lưu form liên hệ/feedback, Admin đánh dấu trạng thái xử lý.
+## Sơ đồ ERD theo từng phân hệ
+## Module 1: Phân hệ Cửa hàng & Sản phẩm (Core Catalog)
+![E-Commerce Flow](./Module-1_-Phân-hệ-Cửa-hàng-&-Sản-phẩm.png)
+## Module 2: Phân hệ Bán hàng & Đơn hàng (E-Commerce & Orders)
+![E-Commerce Flow](./Module-2_-Phân-hệ-Bán-hàng-&-Đơn-hàng.png)
+## Module 3: Phân hệ Tour Trải nghiệm O2O (Tour Booking)
+![E-Commerce Flow](./Module-3_-Phân-hệ-Tour-Trải-nghiệm-O2O.png)
+## Module 4: Phân hệ Thanh toán, Tương tác & Hậu mãi (Payment & Feedback)
+![E-Commerce Flow](./Module-4-Payment-&-Feedback.png)
+
 ## 4. Sơ đồ Luồng Hoạt động (Activity Diagrams)
 
 ### 4.1. E-Commerce & Payment Flow
 ![E-Commerce Flow](./ecommerce-flow.png)
+
 ### 4.2. Tour-booking-flow
 ![E-Commerce Flow](./O2O-Tour-Booking-Flow.png)
+
 ### 4.3. Dispute & Compensation Activity Diagram
 ![E-Commerce Flow](./Dispute-Flow.png)
+
 ### 4.4. Admin & Operations Activity Diagram
 ![E-Commerce Flow](./Admin-&-Operations-Activity-Diagram.png)
+
 ## Cài đặt & chạy dự án
 
 ### Yêu cầu
