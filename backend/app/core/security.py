@@ -1,38 +1,59 @@
+from datetime import datetime, timedelta, timezone
+
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jwt import PyJWKClient
 
 from app.core.config import get_settings
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-_jwks_client: PyJWKClient | None = None
+
+# ── Password hashing (bcrypt) ──────────────────────────────────────────
 
 
-def _get_jwks_client() -> PyJWKClient:
-    global _jwks_client
-    if _jwks_client is None:
-        _jwks_client = PyJWKClient(get_settings().supabase_jwks_url)
-    return _jwks_client
+def hash_password(plain: str) -> str:
+    return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
 
 
-def decode_supabase_jwt(token: str) -> dict:
-    settings = get_settings()
-    if not settings.supabase_jwt_secret and not settings.supabase_jwks_url:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Chưa cấu hình SUPABASE_JWKS_URL hoặc SUPABASE_JWT_SECRET trong backend/.env",
-        )
+def verify_password(plain: str, hashed: str) -> bool:
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
+
+
+# ── JWT local ───────────────────────────────────────────────────────────
+
+
+def create_access_token(user_id: str, email: str, role: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(hours=12)
+    return jwt.encode(
+        {"sub": user_id, "email": email, "role": role, "exp": expire},
+        get_settings().secret_key,
+        algorithm="HS256",
+    )
+
+
+# ── JWT verification (local HS256) ────────────────────────────────────
+
+
+def _decode_local(token: str) -> dict | None:
+    secret = get_settings().secret_key
+    if not secret or secret == "DEV_SECRET_CHANGE_ME_IN_PRODUCTION":
+        return None
     try:
-        if settings.supabase_jwt_secret:
-            return jwt.decode(token, settings.supabase_jwt_secret, algorithms=["HS256"])
-        signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
-        return jwt.decode(token, signing_key.key, algorithms=["ES256", "RS256"])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token đã hết hạn")
+        return jwt.decode(token, secret, algorithms=["HS256"])
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token không hợp lệ")
+        return None
+
+
+def decode_token(token: str) -> dict:
+    payload = _decode_local(token)
+    if payload:
+        return payload
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token không hợp lệ",
+    )
 
 
 async def get_current_user(
@@ -40,9 +61,10 @@ async def get_current_user(
 ) -> dict:
     if credentials is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chưa đăng nhập")
-    payload = decode_supabase_jwt(credentials.credentials)
+    payload = decode_token(credentials.credentials)
+    app_meta = payload.get("app_metadata") or {}
     return {
         "id": payload.get("sub"),
         "email": payload.get("email"),
-        "role": (payload.get("app_metadata") or {}).get("role", "customer"),
+        "role": payload.get("role") or app_meta.get("role", "customer"),
     }
