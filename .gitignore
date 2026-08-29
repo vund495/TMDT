@@ -13,6 +13,10 @@ dist/
 # Env
 .env
 .env.local
+*.log
+
+# Ghi chu tien do noi bo
+TIEN-DO.md
 
 # IDE / OS
 .idea/
