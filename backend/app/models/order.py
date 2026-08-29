@@ -46,4 +46,5 @@ class Shipment(Base):
     carrier: Mapped[str | None] = mapped_column(String(64))
     tracking_code: Mapped[str | None] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(32), default="packing")
+    failed_delivery_count: Mapped[int] = mapped_column(Integer, default=0)
     is_returned: Mapped[bool] = mapped_column(Boolean, default=False)

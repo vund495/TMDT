@@ -24,5 +24,7 @@ class Product(Base):
     stock: Mapped[int] = mapped_column(Integer, default=0)
     sold_count: Mapped[int] = mapped_column(Integer, default=0)
     images: Mapped[list | None] = mapped_column(JSONB)
+    video_url: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(32), default="draft")
+    reject_reason: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
