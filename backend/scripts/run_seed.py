@@ -47,13 +47,22 @@ async def main() -> None:
                 (select count(*) from products)         as products,
                 (select count(*) from product_passports) as passports,
                 (select count(*) from tour_slots)       as tour_slots,
-                (select count(*) from vouchers)         as vouchers
+                (select count(*) from vouchers)         as vouchers,
+                (select count(*) from orders)           as orders,
+                (select count(*) from tour_bookings)    as tour_bookings,
+                (select count(*) from reviews)          as reviews,
+                (select count(*) from disputes)         as disputes,
+                (select count(*) from payments)         as payments,
+                (select count(*) from contact_messages) as contact_messages
             """
         )
         print("== Tong ket ==")
         print(f"  users={counts['users']} workshops={counts['workshops']} "
               f"products={counts['products']} passports={counts['passports']} "
-              f"tour_slots={counts['tour_slots']} vouchers={counts['vouchers']}")
+              f"tour_slots={counts['tour_slots']} vouchers={counts['vouchers']} "
+              f"orders={counts['orders']} tour_bookings={counts['tour_bookings']} "
+              f"reviews={counts['reviews']} disputes={counts['disputes']} "
+              f"payments={counts['payments']} contact_messages={counts['contact_messages']}")
     finally:
         await conn.close()
 

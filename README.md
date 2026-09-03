@@ -1,4 +1,4 @@
-# TMDT Gốm sứ Bát Tràng
+# TMDT VietCraft Bát Tràng
 
 Nền tảng thương mại điện tử trung gian kết nối xưởng gốm Bát Tràng với khách hàng B2C/B2B, kèm mô hình **O2O** (đặt tour trải nghiệm làm gốm) và cơ chế **Hộ chiếu sản phẩm** (Product Passport) qua mã QR để định vị thương hiệu.
 
