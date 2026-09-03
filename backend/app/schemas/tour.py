@@ -6,6 +6,14 @@ from pydantic import BaseModel
 from app.schemas.common import ORMModel
 
 
+class TourSlotCreateIn(BaseModel):
+    workshop_id: uuid.UUID
+    tour_date: date
+    start_time: time
+    capacity: int
+    price_per_guest: int
+
+
 class TourSlotRead(ORMModel):
     id: uuid.UUID
     workshop_id: uuid.UUID

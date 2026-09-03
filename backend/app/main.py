@@ -1,10 +1,13 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import api_router
 
 app = FastAPI(
-    title="Nền tảng TMDT Gốm sứ Bát Tràng",
+    title="VietCraft Bát Tràng - Nơi đất kể chuyện, lửa giữ hồn",
     version="0.1.0",
 )
 
@@ -15,6 +18,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Phục vụ file upload (ảnh sản phẩm, bằng chứng khiếu nại...) từ thư mục uploads
+# Working dir của container là /app, `và upload.py` lưu vào uploads/ (tức /app/uploads).
+_uploads_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+os.makedirs(_uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
 
 @app.get("/health", tags=["Health"])

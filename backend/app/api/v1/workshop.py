@@ -18,6 +18,8 @@ from app.schemas.workshop import (
     WorkshopRead,
     WorkshopRevenuePeriod,
     WorkshopUpdateIn,
+    WorkshopWallet,
+    WorkshopWalletPeriod,
 )
 
 router = APIRouter(prefix="/workshop", tags=["Workshop"])
@@ -163,7 +165,7 @@ async def publish_product(
     product = await session.get(Product, product_id)
     if product is None or product.workshop_id != workshop.id:
         raise HTTPException(404, "Không tìm thấy sản phẩm")
-    product.status = "active"
+    product.status = "pending_review"
     # Tự sinh Product Passport (QR) nếu chưa có
     existing = await session.execute(
         select(ProductPassport).where(ProductPassport.product_id == product.id)
@@ -238,3 +240,76 @@ async def revenue_report(
         .order_by(RevenueRecord.period.desc())
     )
     return result.scalars().all()
+
+
+@router.get("/revenue/wallet", response_model=WorkshopWallet)
+async def workshop_wallet(
+    workshop: Workshop = Depends(get_owned_workshop),
+    session: AsyncSession = Depends(get_session),
+):
+    """UC-04: ví đối soát doanh thu — tổng hợp + chi tiết theo kỳ cho xưởng."""
+    from sqlalchemy import func
+
+    from app.models.order import Order
+    from app.models.voucher import RevenueRecord
+
+    records_result = await session.execute(
+        select(RevenueRecord)
+        .where(RevenueRecord.workshop_id == workshop.id)
+        .order_by(RevenueRecord.period.desc())
+    )
+    records = records_result.scalars().all()
+
+    # Số đơn thành công (đã giao hoặc hoàn tất) của xưởng theo kỳ
+    orders_result = await session.execute(
+        select(
+            func.date_trunc("month", Order.created_at).label("month"),
+            func.count(Order.id).label("cnt"),
+        )
+        .where(
+            Order.workshop_id == workshop.id,
+            Order.status.in_(["shipping", "completed", "preparing"]),
+        )
+        .group_by("month")
+        .order_by("month")
+    )
+
+    paid_by_period: dict[str, int | float] = {}
+    for month, cnt in orders_result.all():
+        from datetime import date
+
+        if month is not None:
+            key = date(month.year, month.month, 1).strftime("%Y-%m")
+            paid_by_period[key] = int(cnt)
+
+    periods = []
+    total_gross = 0
+    total_commission = 0
+    total_payout = 0
+    total_paid = 0
+    for r in records:
+        gross = int(r.gross_amount or 0)
+        commission = int(r.commission_amount or 0)
+        payout = int(r.payout_amount or 0)
+        paid = int(paid_by_period.get(r.period, 0))
+        total_gross += gross
+        total_commission += commission
+        total_payout += payout
+        total_paid += paid
+        periods.append(
+            WorkshopWalletPeriod(
+                period=r.period,
+                gross_amount=gross,
+                commission_amount=commission,
+                payout_amount=payout,
+                paid_orders=paid,
+            )
+        )
+
+    return WorkshopWallet(
+        total_gross=total_gross,
+        total_commission=total_commission,
+        total_payout=total_payout,
+        total_paid_orders=total_paid,
+        periods=periods,
+    )

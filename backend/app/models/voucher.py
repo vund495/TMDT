@@ -20,6 +20,7 @@ class Voucher(Base):
     usage_limit: Mapped[int | None] = mapped_column(Integer)
     used_count: Mapped[int] = mapped_column(Integer, default=0)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    used_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
 
 
 class RevenueRecord(Base):

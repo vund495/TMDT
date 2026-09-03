@@ -16,6 +16,7 @@ from app.schemas.tour import (
     TourBookingCreateOut,
     TourBookingRead,
     TourSlotRead,
+    TourSlotCreateIn,
 )
 from app.services import payment_service, tour_service
 from app.services.tour_service import TourError
@@ -42,6 +43,27 @@ async def list_slots(
     query = query.where(TourSlot.slots_left > 0)
     result = await session.execute(query)
     return result.scalars().all()
+
+
+@router.post("/slots", response_model=list[TourSlotRead], status_code=201)
+async def create_slots(
+    body: TourSlotCreateIn,
+    workshop: Workshop = Depends(get_owned_workshop),
+    session: AsyncSession = Depends(get_session),
+):
+    """Workshop tạo suất tour trống."""
+    slot = TourSlot(
+        workshop_id=body.workshop_id,
+        tour_date=body.tour_date,
+        start_time=body.start_time,
+        capacity=body.capacity,
+        slots_left=body.capacity,
+        price_per_guest=body.price_per_guest,
+    )
+    session.add(slot)
+    await session.commit()
+    await session.refresh(slot)
+    return [slot]
 
 
 @router.post("/bookings", response_model=TourBookingCreateOut, status_code=201)

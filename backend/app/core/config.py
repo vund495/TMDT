@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_name: str = "Nền tảng TMDT Gốm sứ Bát Tràng"
+    app_name: str = "VietCraft Bát Tràng - Nơi đất kể chuyện, lửa giữ hồn"
     debug: bool = True
 
     database_url: str = ""

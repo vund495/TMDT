@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.core.dependencies import require_admin
+from app.core.dependencies import require_admin, get_current_user
 from app.models.voucher import Voucher
 from app.schemas.voucher import (
     VoucherCreateIn,
@@ -95,7 +95,6 @@ async def update_voucher(
     await session.refresh(voucher)
     return _to_read(voucher)
 
-
 @router.delete("/vouchers/{code}", status_code=204)
 async def delete_voucher(
     code: str,
@@ -107,32 +106,20 @@ async def delete_voucher(
     voucher = result.scalar_one_or_none()
     if voucher is None:
         raise HTTPException(404, "Không tìm thấy voucher")
+
     await session.delete(voucher)
     await session.commit()
     return None
 
 
-@router.get("/vouchers/{code}", response_model=VoucherValidateOut)
-async def validate_voucher(
-    code: str,
+@router.get("/my-vouchers", response_model=list[VoucherRead])
+async def my_vouchers(
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """UC-27/28: kiểm tra voucher hợp lệ khi checkout."""
+    """Danh sách voucher của khách hàng."""
+    uid = uuid.UUID(str(current_user["id"]))
     result = await session.execute(
-        select(Voucher).where(Voucher.code == code, Voucher.active.is_(True))
+        select(Voucher).where(Voucher.used_by_user_id == uid)
     )
-    voucher = result.scalar_one_or_none()
-    if voucher is None:
-        return VoucherValidateOut(code=code, valid=False, message="Mã giảm giá không tồn tại")
-    today = date.today()
-    if voucher.valid_from > today or voucher.valid_until < today:
-        return VoucherValidateOut(code=code, valid=False, message="Mã giảm giá đã hết hạn")
-    if voucher.usage_limit is not None and voucher.used_count >= voucher.usage_limit:
-        return VoucherValidateOut(code=code, valid=False, message="Mã giảm giá đã hết lượt sử dụng")
-    return VoucherValidateOut(
-        code=code,
-        valid=True,
-        discount_percent=voucher.discount_percent,
-        max_discount_amount=voucher.max_discount_amount,
-        message="Mã giảm giá hợp lệ",
-    )
+    return [_to_read(v) for v in result.scalars().all()]

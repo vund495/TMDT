@@ -264,3 +264,62 @@ async def find_payment_by_ref(session: AsyncSession, code: str) -> Payment | Non
             )
             return pay_result.scalars().first()
     return None
+
+
+async def reconcile_revenue(session: AsyncSession) -> dict:
+    """Đối soát doanh thu: kiểm tra tính nhất quán giữa payments và revenue_records."""
+    from app.models.voucher import RevenueRecord
+    from sqlalchemy import func
+    
+    # Lấy tổng doanh thu từ revenue_records
+    total_revenue_result = await session.execute(
+        select(func.coalesce(func.sum(RevenueRecord.gross_amount), 0))
+    )
+    total_revenue = float(total_revenue_result.scalar_one_or_none() or 0)
+    
+    # Lấy tổng doanh thu từ orders (chú ý: chỉ các order ở trạng thái completed)
+    total_orders_result = await session.execute(
+        select(func.coalesce(func.sum(Order.total), 0)).select_from(Order).where(Order.status == "completed")
+    )
+    total_orders_revenue = float(total_orders_result.scalar_one_or_none() or 0)
+    
+    # Đếm số lượng revenue records
+    revenue_count_result = await session.execute(
+        select(func.count()).select_from(RevenueRecord)
+    )
+    revenue_count = revenue_count_result.scalar_one_or_none() or 0
+    
+    return {
+        "total_revenue": total_revenue,
+        "total_orders_revenue": total_orders_revenue,
+        "revenue_records_count": revenue_count,
+        "consistent": abs(total_revenue - total_orders_revenue) < 1000,  # cho phép sai số nhỏ
+    }
+    order_result = await session.execute(
+        select(Order).where(Order.code == code)
+    )
+    order = order_result.scalar_one_or_none()
+    if order is not None:
+        pay_result = await session.execute(
+            select(Payment).where(Payment.ref_type == "order", Payment.ref_id == order.id)
+        )
+        payment = pay_result.scalars().first()
+        if payment is not None:
+            return payment
+    # UC-23/24: tour booking — QR dùng 8 ký tự đầu của booking id (in hoa)
+    booking_result = await session.execute(
+        select(TourBooking)
+    )
+    tour_code = code.upper()
+    if tour_code.startswith("TT-"):
+        tour_code = tour_code[3:]
+    for booking in booking_result.scalars().all():
+        if booking.id.hex[:8].upper() == tour_code:
+            pay_result = await session.execute(
+                select(Payment).where(
+                    Payment.ref_type == "tour",
+                    Payment.tour_booking_id == booking.id,
+                )
+            )
+            return pay_result.scalars().first()
+    return None

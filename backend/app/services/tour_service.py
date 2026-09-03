@@ -1,5 +1,6 @@
 """UC-23/24: đặt tour, khóa slot chống race condition."""
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -74,6 +75,17 @@ async def cancel_booking(session: AsyncSession, booking: TourBooking) -> None:
     ):
         raise TourError("Vé này không thể hủy")
     slot = await session.get(TourSlot, booking.slot_id)
+    if slot is None:
+        raise TourError("Không tìm thấy suất tour", 404)
+
+    # UC-03: enforce cancellation deadline (24 hours before tour start)
+    tour_datetime = datetime.combine(slot.tour_date, slot.start_time)
+    now = datetime.now(timezone.utc)
+    time_until_tour = tour_datetime - now
+
+    if time_until_tour < timedelta(hours=24):
+        raise TourError("Không thể hủy tour khi đã ít hơn 24 giờ tới giờ xuất phát")
+
     if slot is not None:
         slot.slots_left += booking.num_guests
     booking.status = TourBookingStatus.cancelled.value

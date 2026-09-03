@@ -43,3 +43,19 @@ class WorkshopRevenuePeriod(ORMModel):
     gross_amount: int
     commission_amount: int
     payout_amount: int
+
+
+class WorkshopWalletPeriod(ORMModel):
+    period: str
+    gross_amount: int
+    commission_amount: int
+    payout_amount: int
+    paid_orders: int
+
+
+class WorkshopWallet(ORMModel):
+    total_gross: int
+    total_commission: int
+    total_payout: int
+    total_paid_orders: int
+    periods: list[WorkshopWalletPeriod]

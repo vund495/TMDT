@@ -77,7 +77,9 @@ async def pending_products(
     session: AsyncSession = Depends(get_session),
 ):
     result = await session.execute(
-        select(Product).where(Product.status == "draft").order_by(Product.created_at)
+        select(Product)
+        .where(Product.status.in_(["pending_review", "draft"]))
+        .order_by(Product.created_at)
     )
     return result.scalars().all()
 
@@ -192,23 +194,21 @@ async def platform_stats(
 
     total_revenue = (
         await session.execute(select(func.coalesce(func.sum(RevenueRecord.gross_amount), 0)))
-    ).scalar()
+    ).scalar_one()
     orders_count = (
         await session.execute(select(func.count()).select_from(Order))
     ).scalar_one()
     workshops_count = (
         await session.execute(select(func.count()).select_from(Workshop))
     ).scalar_one()
-    customers_count = (
-        await session.execute(
-            select(func.count()).select_from(User).where(User.role == "customer")
-        )
-    ).scalar_one()
-    disputes_pending = (
-        await session.execute(
-            select(func.count()).select_from(Dispute).where(Dispute.status.in_(["open", "reviewing"]))
-        )
-    ).scalar_one()
+    customers_result = await session.execute(
+        select(func.count()).select_from(User).where(User.role == "customer")
+    )
+    customers_count = customers_result.scalar_one()
+    disputes_result = await session.execute(
+        select(func.count()).select_from(Dispute).where(Dispute.status.in_(["open", "reviewing"]))
+    )
+    disputes_pending = disputes_result.scalar_one()
     return {
         "total_revenue": int(total_revenue or 0),
         "orders_count": orders_count,
@@ -216,3 +216,15 @@ async def platform_stats(
         "customers_count": customers_count,
         "disputes_pending": disputes_pending,
     }
+
+
+@router.post("/reconcile-revenue")
+async def reconcile_revenue(
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """Đối soát doanh thu."""
+    from app.services.payment_service import reconcile_revenue
+    
+    result = await reconcile_revenue(session)
+    return result
