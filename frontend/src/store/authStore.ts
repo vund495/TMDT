@@ -1,70 +1,87 @@
 import { create } from "zustand";
-import * as authApi from "../lib/auth";
-import { clearToken, setToken } from "../lib/api";
-import type { Role, UserProfile } from "../types";
+import { type UserProfile, type Role } from "../types";
+import {
+  login as apiLogin,
+  register as apiRegister,
+  getMe,
+  type LoginInput,
+  type RegisterInput,
+} from "../lib/api";
+import { getToken, setToken, clearToken } from "../lib/api/client";
+import { addToCart } from "../lib/api";
+import { useLocalCart } from "./localCartStore";
 
-interface RegisterPayload {
-  email: string;
-  password: string;
-  full_name?: string;
-  phone?: string;
-  role: Role;
+// Đồng bộ giỏ hàng local (chưa đăng nhập) lên server sau khi login.
+async function mergeLocalCart() {
+  const local = useLocalCart.getState().items;
+  if (local.length === 0) return;
+  try {
+    for (const item of local) {
+      await addToCart(item.product_id, item.quantity);
+    }
+    useLocalCart.getState().clear();
+  } catch {
+    // giữ giỏ local lại nếu đồng bộ lỗi
+  }
 }
 
 interface AuthState {
+  token: string | null;
   profile: UserProfile | null;
-  loading: boolean;
-  init: () => Promise<void>;
-  login: (email: string, password: string) => Promise<UserProfile>;
-  register: (
-    email: string,
-    password: string,
-    role: Role,
-    fullName?: string,
-    phone?: string
-  ) => Promise<UserProfile>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (input: LoginInput) => Promise<UserProfile>;
+  register: (input: RegisterInput) => Promise<UserProfile>;
   logout: () => void;
+  initFromStorage: () => Promise<void>;
+  setRole: (role: Role) => void;
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
+export const useAuthStore = create<AuthState>((set) => ({
+  token: getToken(),
   profile: null,
-  loading: true,
+  isAuthenticated: Boolean(getToken()),
+  isLoading: true,
 
-  async init() {
+  login: async (input) => {
+    const res = await apiLogin(input);
+    setToken(res.access_token);
+    set({ token: res.access_token, profile: res.user, isAuthenticated: true });
+    await mergeLocalCart();
+    return res.user;
+  },
+
+  register: async (input) => {
+    const res = await apiRegister(input);
+    setToken(res.access_token);
+    set({ token: res.access_token, profile: res.user, isAuthenticated: true });
+    await mergeLocalCart();
+    return res.user;
+  },
+
+  logout: () => {
+    clearToken();
+    set({ token: null, profile: null, isAuthenticated: false });
+  },
+
+  initFromStorage: async () => {
+    const token = getToken();
+    if (!token) {
+      set({ isLoading: false, isAuthenticated: false, profile: null });
+      return;
+    }
     try {
-      const profile = await authApi.fetchMe();
-      set({ profile });
+      const user = await getMe();
+      set({ profile: user, isAuthenticated: true, isLoading: false });
     } catch {
       clearToken();
-      set({ profile: null });
-    } finally {
-      set({ loading: false });
+      set({ token: null, profile: null, isAuthenticated: false, isLoading: false });
+      return;
     }
+    mergeLocalCart();
   },
 
-  async login(email, password) {
-    const data = await authApi.login(email, password);
-    setToken(data.access_token);
-    set({ profile: data.user });
-    return data.user;
-  },
-
-  async register(email, password, role, fullName, phone) {
-    const payload: RegisterPayload = {
-      email,
-      password,
-      role,
-      full_name: fullName || undefined,
-      phone: phone || undefined,
-    };
-    const data = await authApi.register(payload);
-    setToken(data.access_token);
-    set({ profile: data.user });
-    return data.user;
-  },
-
-  logout() {
-    clearToken();
-    set({ profile: null });
+  setRole: (role) => {
+    set((s) => (s.profile ? { ...s, profile: { ...s.profile, role } } : s));
   },
 }));

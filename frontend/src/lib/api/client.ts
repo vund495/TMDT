@@ -38,3 +38,29 @@ export async function apiFetch<T = unknown>(
   }
   return res.json() as Promise<T>;
 }
+
+/** Gửi request nhưng không cần parse JSON (ví dụ nhận text/error). */
+export async function apiSend(path: string, options: RequestInit = {}): Promise<Response> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  if (!res.ok) {
+    let detail = await res.text();
+    try {
+      detail = JSON.parse(detail).detail ?? detail;
+    } catch {
+      /* giữ nguyên text */
+    }
+    throw new Error(detail || `API ${res.status}`);
+  }
+  return res;
+}
+
+export const jsonBody = (data: unknown): RequestInit => ({
+  method: "POST",
+  body: JSON.stringify(data),
+});
