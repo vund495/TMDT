@@ -38,6 +38,7 @@ import WorkshopWallet from "./pages/workshop/WorkshopWallet";
 
 import AdminHome from "./pages/admin/AdminHome";
 import AdminWorkshops from "./pages/admin/AdminWorkshops";
+import AdminUsers from "./pages/admin/AdminUsers";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminVouchers from "./pages/admin/AdminVouchers";
@@ -120,6 +121,7 @@ export default function App() {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminHome />} />
             <Route path="/admin/xuong" element={<AdminWorkshops />} />
+            <Route path="/admin/nguoi-dung" element={<AdminUsers />} />
             <Route path="/admin/san-pham" element={<AdminProducts />} />
             <Route path="/admin/khieu-nai" element={<AdminDisputes />} />
             <Route path="/admin/uu-dai" element={<AdminVouchers />} />

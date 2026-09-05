@@ -78,6 +78,10 @@ export function publishProduct(productId: string): Promise<Product> {
   return apiFetch<Product>(`/api/v1/workshop/products/${productId}/publish`, { method: "POST" });
 }
 
+export function deleteProduct(productId: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/workshop/products/${productId}`, { method: "DELETE" });
+}
+
 export function listWorkshopOrders(status?: string): Promise<Order[]> {
   const sp = new URLSearchParams();
   if (status) sp.set("status", status);

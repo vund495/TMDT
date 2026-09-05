@@ -16,6 +16,18 @@ class UserRead(BaseModel):
     created_at: datetime
 
 
+class AdminUserRead(UserRead):
+    bad_order_count: int = 0
+    is_active: bool = True
+    workshop_name: str | None = None
+    orders_count: int = 0
+    total_spent: int = 0
+
+
+class SetUserActiveIn(BaseModel):
+    is_active: bool
+
+
 class SyncProfileIn(BaseModel):
     full_name: str | None = None
     phone: str | None = None

@@ -102,8 +102,20 @@ async def order_detail(
     items_result = await session.execute(
         select(OrderItem).where(OrderItem.order_id == order.id)
     )
+    items = items_result.scalars().all()
     detail = OrderDetail.model_validate(order)
-    detail.items = [OrderItemRead.model_validate(i) for i in items_result.scalars().all()]
+    detail.items = [OrderItemRead.model_validate(i) for i in items]
+    if items:
+        from app.models.product_passport import ProductPassport
+
+        passports = await session.execute(
+            select(ProductPassport.product_id, ProductPassport.qr_code).where(
+                ProductPassport.product_id.in_([i.product_id for i in items])
+            )
+        )
+        qr_map = {pid: qr for pid, qr in passports.all()}
+        for i in detail.items:
+            i.passport_qr = qr_map.get(i.product_id)
     return detail
 
 

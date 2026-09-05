@@ -51,10 +51,20 @@ export default function OrderDetail() {
         <h2 className="font-semibold text-ceramic-900">Sản phẩm</h2>
         <div className="mt-3 space-y-2">
           {(o.items ?? []).map((i) => (
-            <div key={i.id} className="flex justify-between text-sm">
-              <Link to={`/san-pham/${i.product_id}`} className="text-gray-700 hover:underline">
-                {i.product_name} × {i.quantity}
-              </Link>
+            <div key={i.id} className="flex items-center justify-between gap-2 text-sm">
+              <div className="min-w-0">
+                <Link to={`/san-pham/${i.product_id}`} className="text-gray-700 hover:underline">
+                  {i.product_name} × {i.quantity}
+                </Link>
+                {i.passport_qr && (
+                  <Link
+                    to={`/ho-chieu?code=${encodeURIComponent(i.passport_qr)}`}
+                    className="ml-2 inline-flex items-center gap-1 rounded-md bg-brand-lam/10 px-2 py-0.5 text-xs font-semibold text-brand-lam hover:bg-brand-lam/20"
+                  >
+                    🪪 QR hộ chiếu: {i.passport_qr}
+                  </Link>
+                )}
+              </div>
               <Money value={i.unit_price * i.quantity} />
             </div>
           ))}

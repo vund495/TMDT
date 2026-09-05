@@ -41,6 +41,17 @@ export const DISPUTE_STATUS: Record<DisputeStatus, { label: string; tone: Tone }
   resolved: map("Đã giải quyết", "green"),
 };
 
+export const USER_STATUS: Record<"active" | "blocked", { label: string; tone: Tone }> = {
+  active: map("Đang hoạt động", "green"),
+  blocked: map("Bị khóa", "red"),
+};
+
+export const RESOLUTION_LABEL: Record<string, string> = {
+  approved: "Chấp thuận — hoàn tiền",
+  reship: "Chấp thuận — gửi hàng thay thế",
+  rejected: "Từ chối",
+};
+
 // map tone -> badge class
 export const TONE_BADGE: Record<Tone, string> = {
   green: "bg-emerald-50 text-emerald-700 border-emerald-200",

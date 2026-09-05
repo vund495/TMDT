@@ -14,6 +14,14 @@ export interface UserProfile {
   created_at?: string;
 }
 
+export interface AdminUser extends UserProfile {
+  bad_order_count?: number;
+  is_active?: boolean;
+  workshop_name?: string | null;
+  orders_count?: number;
+  total_spent?: number;
+}
+
 export interface TokenResponse {
   access_token: string;
   token_type: string;
@@ -56,6 +64,7 @@ export interface Product {
   video_url?: string | null;
   status: ProductStatus;
   reject_reason?: string | null;
+  passport_qr?: string | null;
   created_at?: string;
 }
 
@@ -121,6 +130,7 @@ export interface OrderItem {
   product_name: string;
   unit_price: number;
   quantity: number;
+  passport_qr?: string | null;
 }
 
 export interface OrderDetail extends Order {

@@ -59,7 +59,7 @@ async def add_item(
     """UC-39: thêm sản phẩm vào giỏ (cộng dồn nếu đã có)."""
     uid = _get_user_id(current_user)
     product = await session.get(Product, body.product_id)
-    if product is None:
+    if product is None or product.is_deleted:
         raise HTTPException(404, "Sản phẩm không tồn tại")
     if body.quantity < 1:
         raise HTTPException(400, "Số lượng tối thiểu là 1")

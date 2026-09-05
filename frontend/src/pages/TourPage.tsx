@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Users } from "lucide-react";
+import { CalendarDays, QrCode, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState, Money, Spinner } from "../components/ui";
 import { bookTour, listSlots } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
+import { toastError } from "../components/ui";
+import type { TourBookingCreateOut } from "../types";
 
 export default function TourPage() {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ export default function TourPage() {
 
   const [workshopId, setWorkshopId] = useState("");
   const [guests, setGuests] = useState<Record<string, number>>({});
+  const [bookingResult, setBookingResult] = useState<TourBookingCreateOut | null>(null);
 
   const slots = useQuery({
     queryKey: ["slots"],
@@ -21,10 +24,11 @@ export default function TourPage() {
 
   const book = useMutation({
     mutationFn: ({ id, n }: { id: string; n: number }) => bookTour(id, n),
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["slots"] });
-      navigate("/tour-cua-toi");
+      setBookingResult(data);
     },
+    onError: (e) => toastError("Đặt tour thất bại", (e as Error).message),
   });
 
   if (slots.isLoading) return <Spinner />;
@@ -103,6 +107,43 @@ export default function TourPage() {
           </div>
         )}
       </div>
+
+      {bookingResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center gap-2">
+              <QrCode className="h-6 w-6 text-brand-lam" />
+              <h2 className="text-lg font-bold text-ceramic-900">Quét mã QR để thanh toán</h2>
+            </div>
+            {bookingResult.qr_url ? (
+              <img
+                src={bookingResult.qr_url}
+                alt="QR thanh toán"
+                className="mx-auto mt-4 max-h-64 rounded-lg border"
+              />
+            ) : (
+              <p className="mt-4 text-sm text-gray-500">Không tạo được mã QR. Vui lòng liên hệ hỗ trợ.</p>
+            )}
+            <p className="mt-3 text-center text-sm text-gray-600">
+              Đơn: <b>{bookingResult.booking.total_amount.toLocaleString("vi-VN")}đ</b> · {bookingResult.booking.num_guests} khách
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => { setBookingResult(null); navigate("/tour-cua-toi"); }}
+                className="flex-1 rounded-lg bg-brand-lam px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-lam/90"
+              >
+                Xem tour của tôi
+              </button>
+              <button
+                onClick={() => setBookingResult(null)}
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

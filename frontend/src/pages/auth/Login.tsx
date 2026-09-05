@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/ui";
 import { toastError, toastOk } from "../../lib/toast";
@@ -14,6 +14,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function doLogin() {
@@ -58,15 +59,25 @@ export default function Login() {
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
             <input
-              type="password"
+              type={showPwd ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") doLogin();
               }}
-              className={inputClass + " pl-9"}
+              className={inputClass + " pl-9 pr-10"}
             />
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setShowPwd((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink"
+              title={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            >
+              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           <Button block onClick={doLogin} disabled={busy}>
             {busy ? "Đang đăng nhập…" : "Đăng nhập"}

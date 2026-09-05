@@ -79,15 +79,14 @@ async def cancel_booking(session: AsyncSession, booking: TourBooking) -> None:
         raise TourError("Không tìm thấy suất tour", 404)
 
     # UC-03: enforce cancellation deadline (24 hours before tour start)
-    tour_datetime = datetime.combine(slot.tour_date, slot.start_time)
+    tour_datetime = datetime.combine(slot.tour_date, slot.start_time, tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
     time_until_tour = tour_datetime - now
 
     if time_until_tour < timedelta(hours=24):
         raise TourError("Không thể hủy tour khi đã ít hơn 24 giờ tới giờ xuất phát")
 
-    if slot is not None:
-        slot.slots_left += booking.num_guests
+    slot.slots_left += booking.num_guests
     booking.status = TourBookingStatus.cancelled.value
 
 

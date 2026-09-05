@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Dispute, Product, Workshop } from "../../types";
+import type { AdminUser, Dispute, Page, Product, Workshop } from "../../types";
 
 export function listPendingWorkshops(): Promise<Workshop[]> {
   return apiFetch<Workshop[]>("/api/v1/admin/workshops/pending");
@@ -16,8 +16,12 @@ export function rejectWorkshop(id: string, reason: string): Promise<Workshop> {
   });
 }
 
-export function listPendingProducts(): Promise<Product[]> {
-  return apiFetch<Product[]>("/api/v1/admin/products/pending");
+export function listPendingProducts(params: { page?: number; page_size?: number } = {}): Promise<Page<Product>> {
+  const sp = new URLSearchParams();
+  if (params.page) sp.set("page", String(params.page));
+  if (params.page_size) sp.set("page_size", String(params.page_size));
+  const qs = sp.toString();
+  return apiFetch<Page<Product>>(`/api/v1/admin/products/pending${qs ? `?${qs}` : ""}`);
 }
 
 export function approveProduct(id: string): Promise<Product> {
@@ -33,6 +37,27 @@ export function rejectProduct(id: string, reason: string): Promise<Product> {
 
 export function listDisputes(): Promise<Dispute[]> {
   return apiFetch<Dispute[]>("/api/v1/admin/disputes");
+}
+
+export function listAdminUsers(params: { q?: string; role?: string; page?: number; page_size?: number } = {}): Promise<Page<AdminUser>> {
+  const sp = new URLSearchParams();
+  if (params.q) sp.set("q", params.q);
+  if (params.role) sp.set("role", params.role);
+  if (params.page) sp.set("page", String(params.page));
+  if (params.page_size) sp.set("page_size", String(params.page_size));
+  const qs = sp.toString();
+  return apiFetch<Page<AdminUser>>(`/api/v1/admin/users${qs ? `?${qs}` : ""}`);
+}
+
+export function getAdminUser(id: string): Promise<AdminUser> {
+  return apiFetch<AdminUser>(`/api/v1/admin/users/${id}`);
+}
+
+export function setUserActive(id: string, is_active: boolean): Promise<AdminUser> {
+  return apiFetch<AdminUser>(`/api/v1/admin/users/${id}/set-active`, {
+    method: "POST",
+    body: JSON.stringify({ is_active }),
+  });
 }
 
 export function resolveDispute(id: string, body: { resolution: string; admin_note?: string }): Promise<Dispute> {

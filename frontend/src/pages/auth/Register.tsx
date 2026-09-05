@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { Button, Field } from "../../components/ui";
 import { toastError, toastOk } from "../../lib/toast";
@@ -12,6 +13,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [role, setRole] = useState<"customer" | "workshop_owner">("customer");
   const [busy, setBusy] = useState(false);
 
@@ -55,10 +57,22 @@ export default function Register() {
           <Field label="Số điện thoại" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09xxxxxxxx" />
           <Field
             label="Mật khẩu"
-            type="password"
+            type={showPwd ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Tối thiểu 8 ký tự"
+            trailing={
+              <button
+                type="button"
+                tabIndex={-1}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowPwd((v) => !v)}
+                className="text-ink-faint hover:text-ink"
+                title={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            }
           />
         </div>
 

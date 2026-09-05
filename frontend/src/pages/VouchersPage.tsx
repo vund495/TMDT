@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Ticket } from "lucide-react";
+import { myVouchers } from "../lib/api";
+import { Money, Spinner } from "../components/ui";
 
 export default function VouchersPage() {
+  const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: myVouchers });
+
   return (
     <div className="mx-auto max-w-xl">
       <div className="flex items-center gap-2">
@@ -10,7 +15,45 @@ export default function VouchersPage() {
       </div>
 
       <div className="mt-6 rounded-xl border border-ceramic-100 bg-white p-6">
-        <h2 className="font-semibold text-ceramic-900">Chương trình ưu đãi</h2>
+        <h2 className="font-semibold text-ceramic-900">Voucher của tôi</h2>
+        {vouchers.isLoading ? (
+          <Spinner />
+        ) : vouchers.isError ? (
+          <p className="mt-3 text-sm text-red-600">Không tải được danh sách voucher.</p>
+        ) : !vouchers.data || vouchers.data.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-500">
+            Bạn chưa có voucher nào. Tham dự tour làm gốm hoặc mua hàng để nhận voucher!
+          </p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {vouchers.data.map((v) => (
+              <div
+                key={v.id}
+                className="flex items-center justify-between rounded-lg border border-brand-lam/30 bg-brand-lam/5 p-4"
+              >
+                <div>
+                  <div className="font-mono text-lg font-bold text-brand-lam">{v.code}</div>
+                  <div className="text-sm text-gray-600">
+                    Giảm {v.discount_percent}%
+                    {v.max_discount_amount ? ` (tối đa ` : ""}
+                    {v.max_discount_amount ? <Money value={v.max_discount_amount} className="inline" /> : null}
+                    {v.max_discount_amount ? `)` : ""}
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    HSD: {new Date(v.valid_until).toLocaleDateString("vi-VN")}
+                  </div>
+                </div>
+                <div className={`rounded-full px-3 py-1 text-xs font-semibold ${v.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                  {v.active ? "Còn hiệu lực" : "Hết hạn"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 rounded-xl border border-ceramic-100 bg-white p-6">
+        <h2 className="font-semibold text-ceramic-900">Cách nhận & sử dụng voucher</h2>
         <ul className="mt-3 space-y-2 text-sm text-gray-700">
           <li>🎫 <b>Mã giảm giá (Voucher)</b> — nhập mã khi thanh toán để giảm % giá trị đơn.</li>
           <li>🏺 <b>Tham dự tour làm gốm</b> — xác nhận tham dự để nhận voucher giảm giá sản phẩm của xưởng.</li>

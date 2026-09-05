@@ -52,8 +52,10 @@ async def create_slots(
     session: AsyncSession = Depends(get_session),
 ):
     """Workshop tạo suất tour trống."""
+    if body.workshop_id != workshop.id:
+        raise HTTPException(403, "Bạn không có quyền tạo slot cho xưởng này")
     slot = TourSlot(
-        workshop_id=body.workshop_id,
+        workshop_id=workshop.id,
         tour_date=body.tour_date,
         start_time=body.start_time,
         capacity=body.capacity,
@@ -112,9 +114,6 @@ async def workshop_bookings(
     current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    from app.core.dependencies import require_workshop_owner
-    from app.models.workshop import Workshop
-
     user = await session.get(User, _get_uid(current_user))
     if user is None or user.role != "workshop_owner":
         raise HTTPException(403, "Bạn không có quyền")
@@ -148,8 +147,11 @@ async def cancel_booking(
         raise HTTPException(404, "Không tìm thấy vé")
     if booking.status in (TourBookingStatus.cancelled.value, TourBookingStatus.attended.value):
         raise HTTPException(400, "Vé này không thể hủy")
-    await tour_service.cancel_booking(session, booking)
-    await payment_service.refund_tour(session, booking)
+    try:
+        await tour_service.cancel_booking(session, booking)
+        await payment_service.refund_tour(session, booking)
+    except TourError as e:
+        raise HTTPException(e.code, e.message)
     await session.commit()
     await session.refresh(booking)
     return booking
@@ -166,7 +168,6 @@ async def mark_attended(
     from datetime import timedelta
 
     from app.models.voucher import Voucher
-    from app.models.workshop import Workshop
 
     booking = await session.get(TourBooking, booking_id)
     if booking is None:
@@ -174,7 +175,10 @@ async def mark_attended(
     slot = await session.get(TourSlot, booking.slot_id)
     if slot is None or slot.workshop_id != workshop.id:
         raise HTTPException(403, "Bạn không có quyền với suất tour này")
-    await tour_service.attend_booking(session, booking)
+    try:
+        await tour_service.attend_booking(session, booking)
+    except TourError as e:
+        raise HTTPException(e.code, e.message)
     if not booking.voucher_issued:
         code = f"TOUR-{booking.id.hex[:6].upper()}"
         today = date.today()

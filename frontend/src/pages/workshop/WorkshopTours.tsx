@@ -25,6 +25,8 @@ export default function WorkshopTours() {
       <div className="mt-6">
         {bookings.isLoading ? (
           <Spinner />
+        ) : bookings.isError ? (
+          <p className="text-red-600">Không tải được danh sách đặt tour.</p>
         ) : !bookings.data || bookings.data.length === 0 ? (
           <EmptyState icon={<Ticket className="h-12 w-12" />} title="Chưa có lượt đặt tour nào" />
         ) : (

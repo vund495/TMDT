@@ -35,6 +35,7 @@ class ProductRead(ORMModel):
     video_url: str | None = None
     status: str
     reject_reason: str | None = None
+    passport_qr: str | None = None
     created_at: datetime
 
 

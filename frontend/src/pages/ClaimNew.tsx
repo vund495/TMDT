@@ -45,13 +45,23 @@ export default function ClaimNew() {
 
       <Panel className="mt-6">
         <div className="space-y-4">
-          <Field
-            label="Đơn hàng đủ điều kiện"
-            required
-            value={orderId}
-            onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Chọn đơn hàng đã nhận..."
-          />
+          <label className="block">
+            <span className="mb-1 block text-sm font-semibold text-ink">
+              Đơn hàng đủ điều kiện <span className="text-red-500">*</span>
+            </span>
+            <select
+              value={orderId}
+              onChange={(e) => setOrderId(e.target.value)}
+              className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-ink focus:border-men-400 focus:outline-none focus:ring-2 focus:ring-men-100"
+            >
+              <option value="">Chọn đơn hàng đã nhận...</option>
+              {eligible.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.code}
+                </option>
+              ))}
+            </select>
+          </label>
           {eligible.length === 0 && (
             <p className="text-xs text-ink-faint">
               Chưa có đơn hàng nào đủ điều kiện (cần đơn đã hoàn thành).{" "}

@@ -7,6 +7,7 @@ import {
   PRODUCT_STATUS,
   TOUR_STATUS,
   DISPUTE_STATUS,
+  USER_STATUS,
 } from "../../utils/status";
 
 const ALL = {
@@ -15,6 +16,7 @@ const ALL = {
   ...PRODUCT_STATUS,
   ...TOUR_STATUS,
   ...DISPUTE_STATUS,
+  ...USER_STATUS,
 } as Record<string, { label: string; tone: Tone }>;
 
 export function StatusBadge({ status }: { status: string }) {

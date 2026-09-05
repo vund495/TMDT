@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -22,7 +22,7 @@ SORT_OPTIONS = {
 
 
 def _active_product_filter():
-    return Product.status.in_(["active", "approved"])
+    return and_(Product.status.in_(["active", "approved"]), Product.is_deleted == False)
 
 
 @router.get("/products", response_model=Page[ProductRead])
@@ -84,7 +84,7 @@ async def get_product(
 ):
     """UC-07: chi tiết sản phẩm kèm thông tin xưởng."""
     product = await session.get(Product, product_id)
-    if product is None or product.status not in ("active", "approved"):
+    if product is None or product.status not in ("active", "approved") or product.is_deleted:
         raise HTTPException(404, "Không tìm thấy sản phẩm")
 
     workshop = await session.get(Workshop, product.workshop_id)

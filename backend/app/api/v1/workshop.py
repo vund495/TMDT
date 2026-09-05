@@ -86,20 +86,31 @@ async def my_products(
     session: AsyncSession = Depends(get_session),
 ):
     """UC-09: danh sách sản phẩm của xưởng."""
+    from app.models.product_passport import ProductPassport
+
     total_result = await session.execute(
         select(func.count())
         .select_from(Product)
-        .where(Product.workshop_id == workshop.id)
+        .where(Product.workshop_id == workshop.id, Product.is_deleted == False)
     )
     total = total_result.scalar_one()
     result = await session.execute(
         select(Product)
-        .where(Product.workshop_id == workshop.id)
+        .where(Product.workshop_id == workshop.id, Product.is_deleted == False)
         .order_by(Product.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
     items = result.scalars().all()
+    if items:
+        passports = await session.execute(
+            select(ProductPassport.product_id, ProductPassport.qr_code).where(
+                ProductPassport.product_id.in_([p.id for p in items])
+            )
+        )
+        qr_map = {pid: qr for pid, qr in passports.all()}
+        for p in items:
+            p.passport_qr = qr_map.get(p.id)
     return Page(
         items=items,
         total=total,
@@ -145,13 +156,30 @@ async def update_product(
     session: AsyncSession = Depends(get_session),
 ):
     product = await session.get(Product, product_id)
-    if product is None or product.workshop_id != workshop.id:
+    if product is None or product.workshop_id != workshop.id or product.is_deleted:
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(product, field, value)
     await session.commit()
     await session.refresh(product)
     return product
+
+
+@router.delete("/products/{product_id}", status_code=204)
+async def delete_product(
+    product_id: uuid.UUID,
+    workshop: Workshop = Depends(get_owned_workshop),
+    session: AsyncSession = Depends(get_session),
+):
+    """Xóa (ẩn) sản phẩm — không xóa vĩnh viễn để giữ lịch sử đơn hàng."""
+    product = await session.get(Product, product_id)
+    if product is None or product.workshop_id != workshop.id:
+        raise HTTPException(404, "Không tìm thấy sản phẩm")
+    if product.is_deleted:
+        raise HTTPException(400, "Sản phẩm đã bị xóa")
+    product.is_deleted = True
+    await session.commit()
+    return None
 
 
 @router.post("/products/{product_id}/publish", response_model=ProductRead)
@@ -163,7 +191,7 @@ async def publish_product(
     from app.models.product_passport import ProductPassport
 
     product = await session.get(Product, product_id)
-    if product is None or product.workshop_id != workshop.id:
+    if product is None or product.workshop_id != workshop.id or product.is_deleted:
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     product.status = "pending_review"
     # Tự sinh Product Passport (QR) nếu chưa có

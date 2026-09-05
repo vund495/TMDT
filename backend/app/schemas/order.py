@@ -26,6 +26,7 @@ class OrderItemRead(ORMModel):
     product_name: str
     unit_price: int
     quantity: int
+    passport_qr: str | None = None
 
 
 class OrderRead(ORMModel):

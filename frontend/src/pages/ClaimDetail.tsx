@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
 import { Badge, Panel, Spinner } from "../components/ui";
+import { RESOLUTION_LABEL } from "../utils/status";
 import { getDispute } from "../lib/api";
 
 export default function ClaimDetail() {
@@ -63,7 +64,8 @@ export default function ClaimDetail() {
         {d.resolution && (
           <div className="mt-5 rounded-xl bg-emerald-50 p-4">
             <span className="label-sm text-emerald-700">Kết quả xử lý</span>
-            <p className="mt-1 text-sm text-emerald-900">{d.resolution}</p>
+            <p className="mt-1 text-sm font-semibold text-emerald-900">{RESOLUTION_LABEL[d.resolution] ?? d.resolution}</p>
+            {d.admin_note && <p className="mt-2 text-sm text-emerald-800">{d.admin_note}</p>}
           </div>
         )}
       </Panel>

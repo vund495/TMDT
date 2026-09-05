@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert } from "lucide-react";
 import { EmptyState, Spinner, StatusBadge } from "../components/ui";
-import { createDispute, listMyDisputes } from "../lib/api";
-import { listOrders } from "../lib/api";
+import { RESOLUTION_LABEL } from "../utils/status";
+import { createDispute, listMyDisputes, listOrders } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 
 export default function DisputesPage() {
@@ -112,7 +112,10 @@ export default function DisputesPage() {
                 </div>
                 <p className="mt-2 text-sm text-gray-700">{d.reason}</p>
                 {d.resolution && (
-                  <p className="mt-2 rounded-md bg-gray-50 p-2 text-sm text-gray-600">Kết quả: {d.resolution}</p>
+                  <div className="mt-2 rounded-md bg-gray-50 p-2 text-sm text-gray-700">
+                    <p>Kết quả: <span className="font-semibold">{RESOLUTION_LABEL[d.resolution] ?? d.resolution}</span></p>
+                    {d.admin_note && <p className="mt-1 text-gray-500">Ghi chú: {d.admin_note}</p>}
+                  </div>
                 )}
               </div>
             ))}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Spinner, StatusBadge } from "../../components/ui";
+import { RESOLUTION_LABEL } from "../../utils/status";
 import { listDisputes, resolveDispute } from "../../lib/api";
 import type { Dispute } from "../../types";
 
@@ -11,6 +12,12 @@ export default function AdminDisputes() {
   const [resolving, setResolving] = useState<Dispute | null>(null);
   const [resolution, setResolution] = useState("");
   const [note, setNote] = useState("");
+
+  const RESOLUTION_OPTIONS: Array<{ value: string; label: string }> = [
+    { value: "approved", label: "Chấp thuận — hoàn tiền" },
+    { value: "reship", label: "Chấp thuận — gửi hàng thay thế" },
+    { value: "rejected", label: "Từ chối" },
+  ];
 
   const resolve = useMutation({
     mutationFn: () => resolveDispute(resolving!.id, { resolution, admin_note: note || undefined }),
@@ -49,7 +56,10 @@ export default function AdminDisputes() {
                 </div>
                 <p className="mt-2 text-sm text-gray-700">{d.reason}</p>
                 {d.resolution && (
-                  <p className="mt-2 rounded-md bg-gray-50 p-2 text-sm text-gray-600">Kết quả: {d.resolution}</p>
+                  <div className="mt-2 rounded-md bg-gray-50 p-2 text-sm text-gray-700">
+                    <p>Kết quả: <span className="font-semibold">{RESOLUTION_LABEL[d.resolution] ?? d.resolution}</span></p>
+                    {d.admin_note && <p className="mt-1 text-gray-500">Ghi chú admin: {d.admin_note}</p>}
+                  </div>
                 )}
               </div>
             ))}
@@ -69,13 +79,23 @@ export default function AdminDisputes() {
           >
             <h2 className="font-bold text-gray-900">Xử lý khiếu nại</h2>
             <p className="text-sm text-gray-600">{resolving.reason}</p>
-            <textarea
-              value={resolution}
-              onChange={(e) => setResolution(e.target.value)}
-              placeholder="Kết quả xử lý * (VD: hoàn tiền, gửi lại hàng, từ chối...)"
-              className="w-full rounded-md border border-gray-300 p-3 text-sm"
-              rows={3}
-            />
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Kết quả xử lý</label>
+              <select
+                value={resolution}
+                onChange={(e) => setResolution(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              >
+                <option value="" disabled>
+                  Chọn quyết định...
+                </option>
+                {RESOLUTION_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}

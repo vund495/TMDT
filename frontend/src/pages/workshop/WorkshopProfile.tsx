@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Spinner, StatusBadge } from "../../components/ui";
 import { createWorkshop, getMyWorkshop, updateWorkshop } from "../../lib/api";
@@ -15,6 +15,15 @@ export default function WorkshopProfile() {
   const [description, setDescription] = useState(existing?.description ?? "");
   const [address, setAddress] = useState(existing?.address ?? "");
   const [logoUrl, setLogoUrl] = useState(existing?.logo_url ?? "");
+
+  useEffect(() => {
+    if (existing) {
+      setName(existing.name ?? "");
+      setDescription(existing.description ?? "");
+      setAddress(existing.address ?? "");
+      setLogoUrl(existing.logo_url ?? "");
+    }
+  }, [existing]);
 
   const save = useMutation({
     mutationFn: () => {

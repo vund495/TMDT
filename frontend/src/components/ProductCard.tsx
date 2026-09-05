@@ -51,8 +51,8 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="flex flex-1 flex-col p-3">
           <h3 className="line-clamp-1 text-sm font-bold text-ink">{product.name}</h3>
-          {product.theme && <p className="mt-0.5 text-xs text-ink-faint">{product.theme}</p>}
-          <div className="mt-auto flex items-baseline gap-2 pt-2">
+          {product.theme && <p className="mt-0.5 truncate text-xs text-ink-faint">{product.theme}</p>}
+          <div className="mt-auto flex items-baseline gap-2 pt-1.5">
             <Money value={price} className="text-sm font-extrabold text-dat-700" />
             {hasDiscount && (
               <Money value={product.original_price} className="text-xs text-ink-faint line-through" />
@@ -61,12 +61,14 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </Link>
       {product.stock > 0 && (
-        <button
-          onClick={handleAddToCart}
-          className="mx-3 mb-3 rounded-lg border border-brand-lam/30 bg-brand-lam/5 px-3 py-1.5 text-xs font-semibold text-brand-lam transition-colors hover:bg-brand-lam hover:text-white"
-        >
-          Thêm giỏ hàng
-        </button>
+        <div className="flex justify-center pb-2.5">
+          <button
+            onClick={handleAddToCart}
+            className="rounded-lg border border-brand-lam/30 bg-brand-lam/5 px-6 py-2 text-xs font-semibold text-brand-lam transition-colors hover:bg-brand-lam hover:text-white"
+          >
+            Thêm giỏ hàng
+          </button>
+        </div>
       )}
     </div>
   );

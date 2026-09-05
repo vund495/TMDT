@@ -6,10 +6,12 @@ import type { Product } from "../../types";
 
 export default function AdminProducts() {
   const qc = useQueryClient();
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["admin-pending-p"],
-    queryFn: listPendingProducts,
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: ["admin-pending-p", page],
+    queryFn: () => listPendingProducts({ page, page_size: 20 }),
   });
+  const totalPages = Math.max(1, data?.total_pages ?? 1);
 
   const [rejecting, setRejecting] = useState<Product | null>(null);
   const [reason, setReason] = useState("");
@@ -35,13 +37,14 @@ export default function AdminProducts() {
           <Spinner />
         ) : isError ? (
           <p className="text-red-600">Không tải được.</p>
-        ) : !data || data.length === 0 ? (
+        ) : !data || data.items.length === 0 ? (
           <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-gray-500">
             Không có sản phẩm nào chờ duyệt.
           </p>
         ) : (
-          <div className="space-y-3">
-            {data.map((p) => (
+          <>
+            <div className="space-y-3">
+              {data.items.map((p) => (
               <div key={p.id} className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
                   {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" /> : "🏺"}
@@ -74,7 +77,27 @@ export default function AdminProducts() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1 || isFetching}
+                className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                ← Trước
+              </button>
+              <span className="px-2 text-gray-600">
+                Trang {page} / {totalPages} — {(data?.total ?? 0).toLocaleString("vi-VN")} sản phẩm
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages || isFetching}
+                className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                Sau →
+              </button>
+            </div>
+          </>
         )}
       </div>
 

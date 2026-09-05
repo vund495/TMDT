@@ -57,6 +57,8 @@ async def login(body: LoginIn, session: AsyncSession = Depends(get_session)):
         body.password, user.password_hash
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email hoặc mật khẩu không đúng")
+    if not user.is_active:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Tài khoản đã bị khóa. Liên hệ quản trị viên")
 
     token = create_access_token(str(user.id), user.email, user.role)
     return TokenOut(access_token=token, user=UserRead.model_validate(user))

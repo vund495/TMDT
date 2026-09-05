@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Plus, X } from "lucide-react";
+import { ImagePlus, Plus, QrCode, Trash2, X } from "lucide-react";
 import { EmptyState, Money, Spinner, StatusBadge } from "../../components/ui";
-import { createProduct, listMyProducts, publishProduct, updateProduct, uploadFile } from "../../lib/api";
+import { createProduct, deleteProduct, listMyProducts, publishProduct, updateProduct, uploadFile } from "../../lib/api";
 import type { Product } from "../../types";
 
 const emptyForm = {
@@ -21,11 +21,18 @@ const emptyForm = {
 
 export default function WorkshopProducts() {
   const qc = useQueryClient();
-  const products = useQuery({ queryKey: ["my-products"], queryFn: () => listMyProducts({ page_size: 100 }) });
+  const [page, setPage] = useState(1);
+  const products = useQuery({
+    queryKey: ["my-products", page],
+    queryFn: () => listMyProducts({ page, page_size: 20 }),
+  });
+  const totalPages = Math.max(1, products.data?.total_pages ?? 1);
 
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [qrFor, setQrFor] = useState<Product | null>(null);
+  const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["my-products"] });
@@ -70,6 +77,15 @@ export default function WorkshopProducts() {
     onSuccess: invalidate,
   });
 
+  const [deleting, setDeleting] = useState<Product | null>(null);
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteProduct(id),
+    onSuccess: () => {
+      invalidate();
+      setDeleting(null);
+    },
+  });
+
   const openNew = () => {
     setEditing(null);
     setForm(emptyForm);
@@ -111,6 +127,7 @@ export default function WorkshopProducts() {
         ) : !products.data || products.data.items.length === 0 ? (
           <EmptyState title="Chưa có sản phẩm nào" hint="Thêm sản phẩm đầu tiên để bắt đầu kinh doanh." />
         ) : (
+          <>
           <div className="space-y-3">
             {products.data.items.map((p) => (
               <div key={p.id} className="flex items-center gap-4 rounded-xl border border-ceramic-100 bg-white p-4">
@@ -135,6 +152,24 @@ export default function WorkshopProducts() {
                   <button onClick={() => openEdit(p)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
                     Sửa
                   </button>
+                  {p.passport_qr && (
+                    <button
+                      onClick={() => {
+                        setQrFor(p);
+                        setCopied(false);
+                      }}
+                      className="flex items-center gap-1 rounded-md border border-brand-lam/40 px-3 py-1.5 text-sm text-brand-lam hover:bg-brand-lam/10"
+                      title="Hộ chiếu sản phẩm QR"
+                    >
+                      <QrCode className="h-4 w-4" /> QR
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setDeleting(p)}
+                    className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                   {(p.status === "draft" || p.status === "rejected" || p.status === "pending_review") && (
                     <button
                       onClick={() => publish.mutate(p.id)}
@@ -148,6 +183,26 @@ export default function WorkshopProducts() {
               </div>
             ))}
           </div>
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1 || products.isFetching}
+              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+            >
+              ← Trước
+            </button>
+            <span className="px-2 text-gray-600">
+              Trang {page} / {totalPages} — {(products.data?.total ?? 0).toLocaleString("vi-VN")} sản phẩm
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || products.isFetching}
+              className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+            >
+              Sau →
+            </button>
+          </div>
+          </>
         )}
       </div>
 
@@ -225,6 +280,74 @@ export default function WorkshopProducts() {
             </div>
             {save.isError && <p className="text-sm text-red-600">{(save.error as Error).message}</p>}
           </form>
+        </div>
+      )}
+
+      {deleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDeleting(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-ceramic-900">Xóa sản phẩm?</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Bạn có chắc muốn xóa <b>{deleting.name}</b>? Hành động này không thể hoàn tác.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setDeleting(null)} className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700">
+                Hủy
+              </button>
+              <button
+                onClick={() => remove.mutate(deleting.id)}
+                disabled={remove.isPending}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {remove.isPending ? "Đang xóa..." : "Xóa"}
+              </button>
+            </div>
+            {remove.isError && <p className="mt-2 text-sm text-red-600">{(remove.error as Error).message}</p>}
+          </div>
+        </div>
+      )}
+
+      {qrFor?.passport_qr && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setQrFor(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ceramic-900">Hộ chiếu sản phẩm</h2>
+              <button onClick={() => setQrFor(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-gray-600">{qrFor.name}</p>
+
+            <div className="mt-4 rounded-lg border-2 border-dashed border-brand-lam/40 bg-brand-lam/5 p-4">
+              <p className="text-center font-mono text-xl font-bold tracking-widest text-brand-lam">
+                {qrFor.passport_qr}
+              </p>
+              <p className="mt-1 text-center text-xs text-gray-500">
+                Cho khách quét mã này tại trang tra cứu để xem nguồn gốc sản phẩm.
+              </p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(qrFor.passport_qr);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="rounded-md bg-brand-lam px-4 py-2 text-sm font-semibold text-white hover:bg-brand-lam/90"
+              >
+                {copied ? "Đã copy" : "Copy mã"}
+              </button>
+              <a
+                href={`http://localhost:5173/ho-chieu?code=${encodeURIComponent(qrFor.passport_qr)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md border border-brand-lam px-4 py-2 text-center text-sm font-semibold text-brand-lam hover:bg-brand-lam/10"
+              >
+                Xem thử
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>

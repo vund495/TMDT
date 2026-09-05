@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ticket } from "lucide-react";
 import { EmptyState, Money, Spinner, StatusBadge } from "../components/ui";
 import { attendBooking, cancelBooking, listMyBookings } from "../lib/api";
+import { toastError } from "../components/ui";
 
 export default function MyTours() {
   const qc = useQueryClient();
@@ -11,8 +12,16 @@ export default function MyTours() {
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["my-bookings"] });
-  const cancel = useMutation({ mutationFn: cancelBooking, onSuccess: invalidate });
-  const attend = useMutation({ mutationFn: attendBooking, onSuccess: invalidate });
+  const cancel = useMutation({
+    mutationFn: cancelBooking,
+    onSuccess: invalidate,
+    onError: (e) => toastError("Hủy tour thất bại", (e as Error).message),
+  });
+  const attend = useMutation({
+    mutationFn: attendBooking,
+    onSuccess: invalidate,
+    onError: (e) => toastError("Xác nhận tham dự thất bại", (e as Error).message),
+  });
 
   return (
     <div>
@@ -40,7 +49,12 @@ export default function MyTours() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {b.status === "confirmed" && (
+                  {b.status === "pending_payment" && (
+                    <span className="rounded-md bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700">
+                      Chờ thanh toán — vui lòng quét QR tại trang đặt tour
+                    </span>
+                  )}
+                  {(b.status === "confirmed" || b.status === "pending_payment") && (
                     <button
                       onClick={() => cancel.mutate(b.id)}
                       disabled={cancel.isPending}

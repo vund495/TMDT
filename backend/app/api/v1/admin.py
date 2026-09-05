@@ -10,9 +10,10 @@ from app.models.order import Order
 from app.models.product import Product
 from app.models.user import User
 from app.models.workshop import Workshop
+from app.schemas.common import Page
 from app.schemas.dispute import DisputeRead
 from app.schemas.product import ProductRead, ProductRejectIn
-from app.schemas.user import UserRead
+from app.schemas.user import AdminUserRead, SetUserActiveIn, UserRead
 from app.schemas.workshop import WorkshopRead
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -71,17 +72,32 @@ async def reject_workshop(
 # ── Product approval ────────────────────────────────────────────────────
 
 
-@router.get("/products/pending", response_model=list[ProductRead])
+@router.get("/products/pending", response_model=Page[ProductRead])
 async def pending_products(
+    page: int = 1,
+    page_size: int = 20,
     admin=Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ):
+    conditions = [Product.status.in_(["pending_review", "draft"]), Product.is_deleted == False]
+    total = (
+        await session.execute(select(func.count()).select_from(Product).where(*conditions))
+    ).scalar_one()
     result = await session.execute(
         select(Product)
-        .where(Product.status.in_(["pending_review", "draft"]))
-        .order_by(Product.created_at)
+        .where(*conditions)
+        .order_by(Product.created_at, Product.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
-    return result.scalars().all()
+    items = result.scalars().all()
+    return Page(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
 
 
 @router.post("/products/{product_id}/approve", response_model=ProductRead)
@@ -93,7 +109,7 @@ async def approve_product(
     from app.models.product_passport import ProductPassport
 
     product = await session.get(Product, uuid.UUID(product_id))
-    if product is None:
+    if product is None or product.is_deleted:
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     product.status = "active"
     product.reject_reason = None
@@ -125,13 +141,124 @@ async def reject_product(
 ):
     """UC-02 rẽ nhánh 2: admin từ chối SP -> trả về bản nháp kèm ghi chú."""
     product = await session.get(Product, uuid.UUID(product_id))
-    if product is None:
+    if product is None or product.is_deleted:
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     product.status = "draft"
     product.reject_reason = body.reason
     await session.commit()
     await session.refresh(product)
     return product
+
+
+# ── Users ───────────────────────────────────────────────────────────────
+
+
+async def _enrich_users(session: AsyncSession, users: list[User]) -> list[AdminUserRead]:
+    """Gắn thống kê đơn hàng + xưởng (nếu là chủ xưởng) cho danh sách users."""
+    if not users:
+        return []
+    ids = [u.id for u in users]
+
+    stats = await session.execute(
+        select(
+            Order.customer_id,
+            func.count(Order.id).label("orders_count"),
+            func.coalesce(func.sum(Order.total), 0).label("total_spent"),
+        )
+        .where(Order.customer_id.in_(ids), Order.status != "pending_payment")
+        .group_by(Order.customer_id)
+    )
+    stats_map = {row.customer_id: row for row in stats.all()}
+
+    workshops = await session.execute(
+        select(Workshop.owner_id, Workshop.name).where(Workshop.owner_id.in_(ids))
+    )
+    workshop_map = {owner_id: name for owner_id, name in workshops.all()}
+
+    result = []
+    for u in users:
+        row = stats_map.get(u.id)
+        data = AdminUserRead.model_validate(u).model_dump()
+        data["orders_count"] = int(row.orders_count) if row else 0
+        data["total_spent"] = int(row.total_spent or 0) if row else 0
+        data["workshop_name"] = workshop_map.get(u.id)
+        result.append(AdminUserRead(**data))
+    return result
+
+
+@router.get("/users", response_model=Page[AdminUserRead])
+async def list_users(
+    q: str | None = None,
+    role: str | None = None,
+    page: int = 1,
+    page_size: int = 10,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """Quản lý người dùng: danh sách, tìm kiếm, lọc vai trò."""
+    conditions = []
+    if q:
+        like = f"%{q.strip().lower()}%"
+        conditions.append(
+            func.lower(User.email).ilike(like)
+            | func.lower(func.coalesce(User.full_name, "")).ilike(like)
+            | func.lower(func.coalesce(User.phone, "")).ilike(like)
+        )
+    if role:
+        conditions.append(User.role == role)
+
+    total = (
+        await session.execute(select(func.count()).select_from(User).where(*conditions))
+    ).scalar_one()
+
+    result = await session.execute(
+        select(User)
+        .where(*conditions)
+        .order_by(User.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    users = result.scalars().all()
+    items = await _enrich_users(session, users)
+    return Page(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
+
+
+@router.get("/users/{user_id}", response_model=AdminUserRead)
+async def get_user(
+    user_id: str,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    user = await session.get(User, uuid.UUID(user_id))
+    if user is None:
+        raise HTTPException(404, "Không tìm thấy người dùng")
+    items = await _enrich_users(session, [user])
+    return items[0]
+
+
+@router.post("/users/{user_id}/set-active", response_model=AdminUserRead)
+async def set_user_active(
+    user_id: str,
+    body: SetUserActiveIn,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    user = await session.get(User, uuid.UUID(user_id))
+    if user is None:
+        raise HTTPException(404, "Không tìm thấy người dùng")
+    if str(user.id) == str(admin.id):
+        raise HTTPException(400, "Không thể khóa tài khoản đang đăng nhập")
+    user.is_active = body.is_active
+    await session.commit()
+    await session.refresh(user)
+    items = await _enrich_users(session, [user])
+    return items[0]
 
 
 # ── Disputes ────────────────────────────────────────────────────────────
