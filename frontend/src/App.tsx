@@ -28,6 +28,7 @@ import AccountPage from "./pages/AccountPage";
 import ContactPage from "./pages/ContactPage";
 import PolicyPage from "./pages/PolicyPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import VnpayResult from "./pages/VnpayResult";
 
 import WorkshopDashboard from "./pages/workshop/WorkshopDashboard";
 import WorkshopProfile from "./pages/workshop/WorkshopProfile";
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/gio-hang" element={<CartPage />} />
           <Route path="/thanh-toan" element={<CheckoutPage />} />
           <Route path="/dat-hang-thanh-cong/:id" element={<OrderSuccess />} />
+          <Route path="/vnpay/ket-qua" element={<VnpayResult />} />
           <Route path="/don-hang" element={<OrdersList />} />
           <Route path="/don-hang/:id" element={<OrderDetail />} />
           <Route path="/tour" element={<TourPage />} />

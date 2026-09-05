@@ -23,6 +23,11 @@ class Settings(BaseSettings):
 
     vnpay_tmn_code: str = ""
     vnpay_hash_secret: str = ""
+    vnpay_url: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    vnpay_return_url: str = "http://localhost:8001/api/v1/payments/vnpay/return"
+    vnpay_api_url: str = ""
+
+    frontend_url: str = "http://localhost:5173"
 
 
 @lru_cache

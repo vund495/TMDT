@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, QrCode, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EmptyState, Money, Spinner } from "../components/ui";
-import { bookTour, listSlots } from "../lib/api";
+import { bookTour, createVnpayPayment, listSlots } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { toastError } from "../components/ui";
 import type { TourBookingCreateOut } from "../types";
@@ -129,8 +129,24 @@ export default function TourPage() {
             </p>
             <div className="mt-4 flex gap-2">
               <button
-                onClick={() => { setBookingResult(null); navigate("/tour-cua-toi"); }}
+                onClick={() => {
+                  if (!bookingResult.payment_id) {
+                    toastError("Lỗi", "Không có payment_id để thanh toán VNPay");
+                    return;
+                  }
+                  createVnpayPayment(bookingResult.payment_id)
+                    .then((r) => window.location.assign(r.pay_url))
+                    .catch(() => navigate("/tour-cua-toi"));
+                }}
                 className="flex-1 rounded-lg bg-brand-lam px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-lam/90"
+              >
+                Thanh toán VNPay
+              </button>
+            </div>
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => { setBookingResult(null); navigate("/tour-cua-toi"); }}
+                className="flex-1 rounded-lg bg-ceramic-100 px-4 py-2.5 text-sm font-semibold text-ceramic-900 hover:bg-ceramic-200"
               >
                 Xem tour của tôi
               </button>

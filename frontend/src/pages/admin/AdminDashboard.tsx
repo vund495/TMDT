@@ -51,12 +51,12 @@ export default function AdminDashboard() {
           )}
         </div>
         <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <h2 className="font-semibold text-gray-900">Sản phẩm chờ duyệt ({pps.data?.length ?? 0})</h2>
-          {pps.data?.length === 0 ? (
+          <h2 className="font-semibold text-gray-900">Sản phẩm chờ duyệt ({pps.data?.items?.length ?? 0})</h2>
+          {(pps.data?.items ?? []).length === 0 ? (
             <p className="mt-2 text-sm text-gray-500">Không có.</p>
           ) : (
             <ul className="mt-2 space-y-2 text-sm">
-              {(pps.data ?? []).slice(0, 5).map((p) => (
+              {(pps.data?.items ?? []).slice(0, 5).map((p) => (
                 <li key={p.id} className="flex justify-between border-b border-gray-100 py-1">
                   <span className="font-medium">{p.name}</span>
                   <span className="text-gray-500">chờ duyệt</span>

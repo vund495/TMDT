@@ -1,5 +1,10 @@
-"""UC-15/21/30: sinh QR VietQR, đối soát webhook, hoàn tiền."""
+"""UC-15/21/30: sinh QR VietQR, đối soát webhook, hoàn tiền, VNPay."""
+import hashlib
+import hmac
 import uuid
+from datetime import datetime
+from urllib.parse import quote_plus
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +38,7 @@ def _minh_money_uri(amount: int, code: str) -> str:
         "000201"
         "010212"
         # Merchant Account Information (EMVCo) - dùng biến thể QRIBFTTA
-        + "26" + "00" + _tlv("00", "QRIBFTTA") + _tlv("01", settings.account_no)
+        + "26" + _len(_tlv("00", "QRIBFTTA") + _tlv("01", settings.account_no))
         + "52045802"
         + "5303704"
         + _tlv("54", str(amount))
@@ -137,6 +142,94 @@ def _now():
     from datetime import datetime, timezone
 
     return datetime.now(timezone.utc)
+
+
+# ---------------------------------------------------------------------------
+# VNPay (thanh toán cổng): build URL, kiểm tra checksum, xử lý IPN
+# ---------------------------------------------------------------------------
+VNPAY_RSP_MESSAGES = {
+    "00": "Confirm Success",
+    "01": "Order not found",
+    "02": "Order already confirmed",
+    "04": "Order not found",
+    "13": "Invalid amount",
+    "97": "Invalid signature",
+    "99": "Unknown error",
+}
+
+
+def vnp_secure_hash(params: dict) -> str:
+    """Checksum VNPay: sort key, ghép key=value (urlencode kiểu PHP), HMAC-SHA512."""
+    fields = [
+        f"{k}={quote_plus(str(v), safe='')}"
+        for k, v in sorted(params.items())
+        if k not in ("vnp_SecureHash", "vnp_SecureHashType")
+    ]
+    data = "&".join(fields)
+    secret = get_settings().vnpay_hash_secret
+    return hmac.new(secret.encode(), data.encode(), hashlib.sha512).hexdigest()
+
+
+def _vnp_query(params: dict) -> str:
+    fields = [
+        f"{k}={quote_plus(str(v), safe='')}"
+        for k, v in sorted(params.items())
+        if k not in ("vnp_SecureHash", "vnp_SecureHashType")
+    ]
+    return "&".join(fields)
+
+
+def build_vnpay_url(payment: Payment) -> str:
+    settings = get_settings()
+    now = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
+    params = {
+        "vnp_Version": "2.1.0",
+        "vnp_Command": "pay",
+        "vnp_TmnCode": settings.vnpay_tmn_code,
+        "vnp_Amount": str(int(payment.amount) * 100),
+        "vnp_CreateDate": now.strftime("%Y%m%d%H%M%S"),
+        "vnp_CurrCode": "VND",
+        "vnp_IpAddr": "127.0.0.1",
+        "vnp_Locale": "vn",
+        "vnp_OrderInfo": f"Thanh toan don {payment.id.hex[:12]}",
+        "vnp_OrderType": "other",
+        "vnp_ReturnUrl": settings.vnpay_return_url,
+        "vnp_TxnRef": payment.id.hex,
+    }
+    query = _vnp_query(params)
+    return f"{settings.vnpay_url}?{query}&vnp_SecureHash={vnp_secure_hash(params)}"
+
+
+async def process_vnpay_payment(session: AsyncSession, params: dict) -> str:
+    """Xác thực + ghi nhận giao dịch VNPay (dùng chung cho return & IPN).
+
+    Trả về RspCode (00 = OK). Caller tự commit.
+    """
+    if not params or vnp_secure_hash(params) != params.get("vnp_SecureHash", ""):
+        return "97"
+    try:
+        payment_id = uuid.UUID(str(params.get("vnp_TxnRef", "")))
+    except ValueError:
+        return "01"
+    payment = await session.get(Payment, payment_id)
+    if payment is None:
+        return "01"
+    try:
+        vnp_amount = int(params.get("vnp_Amount", 0))
+    except ValueError:
+        return "13"
+    if vnp_amount != int(payment.amount) * 100:
+        return "13"
+    if payment.status == "paid":
+        return "00"  # idempotent — đã xử lý trước đó
+    if params.get("vnp_TransactionStatus") == "00" and params.get("vnp_ResponseCode") == "00":
+        await record_payment(
+            session,
+            payment.id,
+            str(params.get("vnp_TransactionNo", "") or ""),
+        )
+        return "00"
+    return "99"
 
 
 async def _on_paid(session: AsyncSession, payment: Payment) -> None:

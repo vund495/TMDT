@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Money, Spinner } from "../components/ui";
-import { createOrder, getCart, validateVoucher } from "../lib/api";
+import { Money, Spinner, toastError } from "../components/ui";
+import { createOrder, getCart, createVnpayPayment, validateVoucher } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 
 export default function CheckoutPage() {
@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const [antiShock, setAntiShock] = useState(true);
   const [voucher, setVoucher] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
+  const [payMethod, setPayMethod] = useState<"vnpay" | "vietqr">("vnpay");
 
   const checkVoucher = useMutation({
     mutationFn: () => validateVoucher(voucher),
@@ -37,7 +38,19 @@ export default function CheckoutPage() {
       }),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["cart"] });
-      navigate(`/dat-hang-thanh-cong/${data.order.id}`, { state: { data } });
+      if (payMethod === "vnpay") {
+        if (!data.payment_id) {
+          toastError("Lỗi", "Không có payment_id để tạo thanh toán VNPay");
+          return;
+        }
+        createVnpayPayment(data.payment_id)
+          .then((r) => {
+            window.location.assign(r.pay_url);
+          })
+          .catch(() => navigate(`/dat-hang-thanh-cong/${data.order.id}`, { state: { data } }));
+      } else {
+        navigate(`/dat-hang-thanh-cong/${data.order.id}`, { state: { data } });
+      }
     },
   });
 
@@ -112,6 +125,47 @@ export default function CheckoutPage() {
           </div>
           {voucherMsg && <p className="mt-2 text-sm">{voucherMsg}</p>}
         </section>
+      <section className="rounded-xl border border-ceramic-100 bg-white p-5">
+          <h2 className="font-semibold text-ceramic-900">Phương thức thanh toán</h2>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm ${
+                payMethod === "vnpay" ? "border-brand-lam bg-brand-lam/5" : "border-gray-200 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="pay"
+                checked={payMethod === "vnpay"}
+                onChange={() => setPayMethod("vnpay")}
+                className="accent-brand-lam"
+              />
+              <span>
+                <span className="font-semibold text-ceramic-900">VNPay</span>
+                <br />
+                <span className="text-xs text-gray-500">Chuyển hướng sang cổng VNPay</span>
+              </span>
+            </label>
+            <label
+              className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm ${
+                payMethod === "vietqr" ? "border-brand-lam bg-brand-lam/5" : "border-gray-200 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="pay"
+                checked={payMethod === "vietqr"}
+                onChange={() => setPayMethod("vietqr")}
+                className="accent-brand-lam"
+              />
+              <span>
+                <span className="font-semibold text-ceramic-900">VietQR</span>
+                <br />
+                <span className="text-xs text-gray-500">Quét mã chuyển khoản ngân hàng</span>
+              </span>
+            </label>
+          </div>
+        </section>
       </div>
 
       <div className="h-fit rounded-xl border border-ceramic-100 bg-white p-5">
@@ -141,7 +195,7 @@ export default function CheckoutPage() {
           disabled={placeOrder.isPending}
           className="mt-4 w-full rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
         >
-          {placeOrder.isPending ? "Đang tạo đơn..." : "Tạo đơn & thanh toán VietQR"}
+          {placeOrder.isPending ? "Đang tạo đơn..." : payMethod === "vnpay" ? "Tạo đơn & thanh toán qua VNPay" : "Tạo đơn & thanh toán VietQR"}
         </button>
         {placeOrder.isError && (
           <p className="mt-2 text-sm text-red-600">{(placeOrder.error as Error).message}</p>

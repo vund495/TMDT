@@ -11,3 +11,4 @@ export * from "./workshop";
 export * from "./admin";
 export * from "./upload";
 export * from "./notifications";
+export * from "./vnpay";

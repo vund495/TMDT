@@ -2,18 +2,31 @@ import re
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.dependencies import require_admin
+from app.core.security import get_current_user
 from app.models.order import Order
 from app.models.payment import Payment
+from app.models.tour import TourBooking
 from app.schemas.payment import CassoTransaction, PaymentRead
 from app.services import payment_service
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
+
+
+class VnpayCreateIn(BaseModel):
+    payment_id: uuid.UUID
+
+
+class VnpayCreateOut(BaseModel):
+    pay_url: str
+    txn_ref: str
 
 
 def extract_order_code(description: str) -> str | None:
@@ -78,6 +91,87 @@ async def casso_webhook(
             matched += 1
     await session.commit()
     return {"processed": True, "matched": matched}
+
+
+@router.post("/vnpay/create", response_model=VnpayCreateOut)
+async def create_vnpay_payment(
+    body: VnpayCreateIn,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """UC-15/23: tạo URL thanh toán VNPay cho đơn hàng / tour."""
+    settings = get_settings()
+    if not (settings.vnpay_tmn_code and settings.vnpay_hash_secret):
+        raise HTTPException(503, "VNPay chưa được cấu hình")
+
+    payment = await session.get(Payment, body.payment_id)
+    if payment is None:
+        raise HTTPException(404, "Không tìm thấy khoản thanh toán")
+    uid = uuid.UUID(str(current_user["id"]))
+
+    owned = False
+    target_code = str(payment.id)
+    if payment.ref_type == "order" and payment.ref_id:
+        order = await session.get(Order, payment.ref_id)
+        if order is not None:
+            owned = order.customer_id == uid
+            target_code = order.code
+    elif payment.ref_type == "tour" and payment.tour_booking_id:
+        booking = await session.get(TourBooking, payment.tour_booking_id)
+        if booking is not None:
+            owned = booking.customer_id == uid
+            target_code = f"TOUR-{booking.id.hex[:8].upper()}"
+    if not owned:
+        raise HTTPException(403, "Bạn không sở hữu khoản thanh toán này")
+    if payment.status == "paid":
+        raise HTTPException(400, f"Thanh toán {target_code} đã hoàn tất")
+
+    pay_url = payment_service.build_vnpay_url(payment)
+    return VnpayCreateOut(pay_url=pay_url, txn_ref=payment.id.hex)
+
+
+@router.get("/vnpay/return", include_in_schema=False)
+async def vnpay_return(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+):
+    """VNPay redirect trình duyệt về đây sau khi xử lý thanh toán."""
+    params = {k: v for k, v in request.query_params.items()}
+    rsp = await payment_service.process_vnpay_payment(session, params)
+    await session.commit()
+
+    status = "success" if rsp == "00" else "failed"
+    ref_param, type_param = "", "order"
+    ref_id = uuid.UUID(str(params.get("vnp_TxnRef", ""))) if params.get("vnp_TxnRef") else None
+    if ref_id:
+        payment = await session.get(Payment, ref_id)
+        if payment is not None and payment.ref_type == "tour":
+            type_param = "tour"
+            ref_param = str(payment.tour_booking_id)
+        elif payment is not None and payment.ref_id:
+            ref_param = str(payment.ref_id)
+
+    redirect = (
+        f"{get_settings().frontend_url}/vnpay/ket-qua"
+        f"?vnp_status={status}&vnp_type={type_param}&vnp_ref={ref_param}"
+        f"&vnp_rsp={params.get('vnp_ResponseCode', '')}"
+    )
+    return RedirectResponse(redirect)
+
+
+@router.get("/vnpay/ipn", include_in_schema=False)
+async def vnpay_ipn(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+):
+    """IPN VNPay: xác nhận giao dịch từ cổng (không phụ thuộc trình duyệt)."""
+    params = {k: v for k, v in request.query_params.items()}
+    rsp = await payment_service.process_vnpay_payment(session, params)
+    await session.commit()
+    return JSONResponse(
+        {"RspCode": rsp, "Message": payment_service.VNPAY_RSP_MESSAGES.get(rsp, "Unknown")},
+        status_code=200,
+    )
 
 
 @router.post("/{payment_ref}/refund", response_model=PaymentRead)
