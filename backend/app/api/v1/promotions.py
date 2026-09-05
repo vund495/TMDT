@@ -123,3 +123,30 @@ async def my_vouchers(
         select(Voucher).where(Voucher.used_by_user_id == uid)
     )
     return [_to_read(v) for v in result.scalars().all()]
+
+
+@router.get("/vouchers/{code}", response_model=VoucherValidateOut)
+async def validate_voucher(
+    code: str,
+    _: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Khách kiểm tra voucher trước khi đặt hàng."""
+    result = await session.execute(select(Voucher).where(Voucher.code == code))
+    voucher = result.scalar_one_or_none()
+    today = date.today()
+    if voucher is None:
+        return VoucherValidateOut(code=code, valid=False, message="Không tìm thấy mã giảm giá")
+    if not voucher.active:
+        return VoucherValidateOut(code=code, valid=False, message="Mã giảm giá đã ngừng áp dụng")
+    if voucher.valid_from > today or voucher.valid_until < today:
+        return VoucherValidateOut(code=code, valid=False, message="Mã giảm giá đã hết hạn")
+    if voucher.usage_limit is not None and voucher.used_count >= voucher.usage_limit:
+        return VoucherValidateOut(code=code, valid=False, message="Mã giảm giá đã hết lượt dùng")
+    return VoucherValidateOut(
+        code=voucher.code,
+        valid=True,
+        discount_percent=voucher.discount_percent,
+        max_discount_amount=voucher.max_discount_amount,
+        message="Có thể sử dụng mã giảm giá này",
+    )

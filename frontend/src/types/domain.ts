@@ -28,6 +28,18 @@ export interface TokenResponse {
   user: UserProfile;
 }
 
+export interface NotificationItem {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  type: string;
+  related_entity_id?: string | null;
+  related_entity_type?: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
 export type WorkshopStatus = "pending" | "approved" | "rejected";
 
 export interface Workshop {

@@ -140,16 +140,36 @@ def _now():
 
 
 async def _on_paid(session: AsyncSession, payment: Payment) -> None:
+    from app.api.v1.notifications import create_notification
+
     if payment.ref_type == "order" and payment.ref_id:
         order = await session.get(Order, payment.ref_id)
         if order and order.status == OrderStatus.pending_payment.value:
             order.status = OrderStatus.preparing.value
             await _record_revenue(session, order, payment.amount)
+            create_notification(
+                session,
+                order.customer_id,
+                f"Đơn hàng {order.code} đã thanh toán thành công",
+                f"Xưởng gốm đang chuẩn bị đóng gói và bàn giao đơn hàng {order.code}. Cảm ơn bạn đã mua sắm tại VietCraft Bát Tràng!",
+                "order",
+                order.id,
+                "order",
+            )
         await _unlock_passports(session, payment.ref_id)
     elif payment.ref_type == "tour" and payment.tour_booking_id:
         booking = await session.get(TourBooking, payment.tour_booking_id)
         if booking and booking.status == "pending_payment":
             booking.status = "confirmed"
+            create_notification(
+                session,
+                booking.customer_id,
+                "Đặt tour trải nghiệm thành công",
+                f"Bạn đã thanh toán xong tour #{str(booking.id)[:8].upper()}. Hãy đến đúng lịch của xưởng để tham gia nhé!",
+                "tour",
+                None,
+                "tour_booking",
+            )
 
 
 async def _unlock_passports(session: AsyncSession, order_id: uuid.UUID) -> None:

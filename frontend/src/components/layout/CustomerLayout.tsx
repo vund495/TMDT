@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Bell } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
-import { getCart } from "../../lib/api";
+import { getCart, listNotifications, markNotificationRead } from "../../lib/api";
 import { useLocalCart } from "../../store/localCartStore";
 import { cn } from "../../utils/ui";
 
@@ -29,6 +30,18 @@ export default function CustomerLayout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const notifQuery = useQuery({
+    queryKey: ["notifications"],
+    queryFn: listNotifications,
+    enabled: isAuthed,
+  });
+  const qc = useQueryClient();
+  const markRead = useMutation({
+    mutationFn: markNotificationRead,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
 
   const cartQuery = useQuery({
     queryKey: ["cart"],
@@ -39,6 +52,9 @@ export default function CustomerLayout() {
   const cartCount = isAuthed
     ? (cartQuery.data?.items.length ?? 0) + localCount
     : localCount;
+
+  const unreadCount = notifQuery.data?.filter((n) => !n.is_read).length ?? 0;
+  const recentNotifs = notifQuery.data?.slice(0, 8) ?? [];
 
   const currentUser = profile;
 
@@ -74,6 +90,66 @@ export default function CustomerLayout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            {isAuthed && (
+              <div className="relative">
+                <button
+                  onClick={() => setNotifOpen((v) => !v)}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-md text-ink hover:bg-cream-100"
+                  title="Thông báo"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-men-700 px-1 text-[10px] font-bold text-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
+                    <div className="absolute right-0 z-20 mt-2 w-96 overflow-hidden rounded-2xl border border-border-soft bg-white shadow-elevated">
+                      <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+                        <p className="text-sm font-bold text-ink">Thông báo</p>
+                        <Link
+                          to="/thong-bao"
+                          onClick={() => setNotifOpen(false)}
+                          className="text-xs font-medium text-brand-lam hover:underline"
+                        >
+                          Xem tất cả
+                        </Link>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {recentNotifs.length === 0 ? (
+                          <p className="px-4 py-6 text-center text-sm text-ink-faint">
+                            Chưa có thông báo nào.
+                          </p>
+                        ) : (
+                          recentNotifs.map((n) => (
+                            <Link
+                              key={n.id}
+                              to="/thong-bao"
+                              onClick={() => {
+                                setNotifOpen(false);
+                                if (!n.is_read) markRead.mutate(n.id);
+                              }}
+                              className={`block border-b border-border-soft px-4 py-3 hover:bg-cream-50 ${
+                                n.is_read ? "" : "bg-brand-lam/5"
+                              }`}
+                            >
+                              <p className="text-sm font-semibold text-ink">
+                                {n.is_read ? null : <span className="mr-1 inline-block h-2 w-2 rounded-full bg-men-700" />}
+                                {n.title}
+                              </p>
+                              <p className="mt-0.5 line-clamp-2 text-xs text-ink-soft">{n.message}</p>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <Link
               to="/gio-hang"
               className="relative flex h-10 w-10 items-center justify-center rounded-md text-ink hover:bg-cream-100"
@@ -112,6 +188,12 @@ export default function CustomerLayout() {
                           className="block px-4 py-2 text-sm text-ink hover:bg-cream-50"
                         >
                           Tài khoản
+                        </Link>
+                        <Link
+                          to="/thong-bao"
+                          className="block px-4 py-2 text-sm text-ink hover:bg-cream-50"
+                        >
+                          Thông báo
                         </Link>
                         <Link
                           to="/don-hang"

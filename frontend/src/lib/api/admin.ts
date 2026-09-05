@@ -103,3 +103,19 @@ export interface ContactMessage {
 export function listContactMessages(): Promise<ContactMessage[]> {
   return apiFetch<ContactMessage[]>("/api/v1/feedback/contact");
 }
+
+export interface AdminTourBooking {
+  booking_id: string;
+  customer_id: string;
+  workshop_id: string;
+  tour_date: string;
+  start_time: string;
+  num_guests: number;
+  total_amount: number;
+  status: string;
+  voucher_issued: boolean;
+}
+
+export function listAdminTourBookings(): Promise<AdminTourBooking[]> {
+  return apiFetch<AdminTourBooking[]>("/api/v1/admin/tours/bookings");
+}

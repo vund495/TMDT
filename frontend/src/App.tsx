@@ -27,6 +27,7 @@ import ClaimDetail from "./pages/ClaimDetail";
 import AccountPage from "./pages/AccountPage";
 import ContactPage from "./pages/ContactPage";
 import PolicyPage from "./pages/PolicyPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 import WorkshopDashboard from "./pages/workshop/WorkshopDashboard";
 import WorkshopProfile from "./pages/workshop/WorkshopProfile";
@@ -41,6 +42,7 @@ import AdminWorkshops from "./pages/admin/AdminWorkshops";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminDisputes from "./pages/admin/AdminDisputes";
+import AdminTours from "./pages/admin/AdminTours";
 import AdminVouchers from "./pages/admin/AdminVouchers";
 import AdminReconcile from "./pages/admin/AdminReconcile";
 import AdminFeedback from "./pages/admin/AdminFeedback";
@@ -99,6 +101,7 @@ export default function App() {
           <Route path="/khieu-nai/moi" element={<ClaimNew />} />
           <Route path="/khieu-nai/:id" element={<ClaimDetail />} />
           <Route path="/tai-khoan" element={<AccountPage />} />
+          <Route path="/thong-bao" element={<NotificationsPage />} />
           <Route path="/lien-he" element={<ContactPage />} />
           <Route path="/chinh-sach" element={<PolicyPage />} />
         </Route>
@@ -124,6 +127,7 @@ export default function App() {
             <Route path="/admin/nguoi-dung" element={<AdminUsers />} />
             <Route path="/admin/san-pham" element={<AdminProducts />} />
             <Route path="/admin/khieu-nai" element={<AdminDisputes />} />
+            <Route path="/admin/tour" element={<AdminTours />} />
             <Route path="/admin/uu-dai" element={<AdminVouchers />} />
             <Route path="/admin/doi-soat" element={<AdminReconcile />} />
             <Route path="/admin/lien-he" element={<AdminFeedback />} />

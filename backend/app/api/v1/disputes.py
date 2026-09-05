@@ -84,6 +84,23 @@ async def resolve_dispute(
                 await payment_service.refund_order(session, order)
     except DisputeError as e:
         raise HTTPException(e.code, e.message)
+    from app.api.v1.notifications import create_notification
+
+    labels = {
+        "approved": "Đồng ý bồi thường (hoàn tiền)",
+        "reship": "Gửi lại hàng thay thế",
+        "rejected": "Từ chối yêu cầu",
+    }
+    note_text = f" Ghi chú của admin: {body.admin_note}" if body.admin_note else ""
+    create_notification(
+        session,
+        dispute.customer_id,
+        "Kết quả giải quyết khiếu nại",
+        f"Yêu cầu khiếu nại đơn hàng đã được giải quyết: {labels.get(body.resolution, body.resolution)}.{note_text}",
+        "dispute",
+        dispute.order_id,
+        "dispute",
+    )
     await session.commit()
     await session.refresh(dispute)
     return dispute

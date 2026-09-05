@@ -13,6 +13,7 @@ from app.models.workshop import Workshop
 from app.schemas.common import Page
 from app.schemas.order import OrderRead
 from app.schemas.product import ProductCreateIn, ProductRead, ProductUpdateIn
+from app.schemas.tour import TourSlotRead
 from app.schemas.workshop import (
     WorkshopCreateIn,
     WorkshopRead,
@@ -216,6 +217,24 @@ async def publish_product(
 # ── Orders ──────────────────────────────────────────────────────────────
 
 
+@router.get("/slots", response_model=list[TourSlotRead])
+async def my_tour_slots(
+    workshop: Workshop = Depends(get_owned_workshop),
+    session: AsyncSession = Depends(get_session),
+):
+    """UC-W: danh sách suất tour của xưởng (kể cả đã kín)."""
+    from sqlalchemy import select
+
+    from app.models.tour import TourSlot
+
+    result = await session.execute(
+        select(TourSlot)
+        .where(TourSlot.workshop_id == workshop.id)
+        .order_by(TourSlot.tour_date.desc(), TourSlot.start_time)
+    )
+    return result.scalars().all()
+
+
 @router.get("/orders", response_model=list[OrderRead])
 async def workshop_orders(
     status: str | None = None,
@@ -246,6 +265,17 @@ async def workshop_ship_order(
     if not can_transition(current, OrderStatus.shipping):
         raise HTTPException(400, "Đơn chưa sẵn sàng bàn giao (chuẩn bị trước đã)")
     order.status = OrderStatus.shipping.value
+    from app.api.v1.notifications import create_notification
+
+    create_notification(
+        session,
+        order.customer_id,
+        f"Đơn hàng {order.code} đang giao",
+        f"Xưởng gốm đã bàn giao {order.code} cho đơn vị vận chuyển. Theo dõi đơn tại mục Đơn hàng của bạn.",
+        "order",
+        order.id,
+        "order",
+    )
     await session.commit()
     await session.refresh(order)
     return order

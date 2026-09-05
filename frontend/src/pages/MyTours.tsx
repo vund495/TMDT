@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ticket } from "lucide-react";
-import { EmptyState, Money, Spinner, StatusBadge } from "../components/ui";
-import { attendBooking, cancelBooking, listMyBookings } from "../lib/api";
-import { toastError } from "../components/ui";
+import { EmptyState, Money, Spinner, StatusBadge, toastError } from "../components/ui";
+import { cancelBooking, listMyBookings } from "../lib/api";
 
 export default function MyTours() {
   const qc = useQueryClient();
@@ -16,11 +15,6 @@ export default function MyTours() {
     mutationFn: cancelBooking,
     onSuccess: invalidate,
     onError: (e) => toastError("Hủy tour thất bại", (e as Error).message),
-  });
-  const attend = useMutation({
-    mutationFn: attendBooking,
-    onSuccess: invalidate,
-    onError: (e) => toastError("Xác nhận tham dự thất bại", (e as Error).message),
   });
 
   return (
@@ -61,15 +55,6 @@ export default function MyTours() {
                       className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
                     >
                       Hủy tour
-                    </button>
-                  )}
-                  {b.status === "confirmed" && (
-                    <button
-                      onClick={() => attend.mutate(b.id)}
-                      disabled={attend.isPending}
-                      className="rounded-md bg-men px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                    >
-                      Đã tham dự (nhận voucher)
                     </button>
                   )}
                 </div>

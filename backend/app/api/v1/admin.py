@@ -49,6 +49,17 @@ async def approve_workshop(
     if workshop is None:
         raise HTTPException(404, "Không tìm thấy xưởng")
     workshop.status = "approved"
+    from app.api.v1.notifications import create_notification
+
+    create_notification(
+        session,
+        workshop.owner_id,
+        "Xưởng đã được duyệt",
+        f"Xưởng gốm “{workshop.name}” của bạn đã được quản trị viên phê duyệt. Bạn có thể đăng sản phẩm ngay bây giờ!",
+        "system",
+        None,
+        "workshop",
+    )
     await session.commit()
     await session.refresh(workshop)
     return workshop
@@ -57,6 +68,7 @@ async def approve_workshop(
 @router.post("/workshops/{workshop_id}/reject", response_model=WorkshopRead)
 async def reject_workshop(
     workshop_id: str,
+    body: ProductRejectIn,
     admin=Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ):
@@ -64,6 +76,18 @@ async def reject_workshop(
     if workshop is None:
         raise HTTPException(404, "Không tìm thấy xưởng")
     workshop.status = "rejected"
+    from app.api.v1.notifications import create_notification
+
+    reason = f" Lý do: {body.reason}" if body.reason else ""
+    create_notification(
+        session,
+        workshop.owner_id,
+        "Xưởng bị từ chối duyệt",
+        f"Xưởng gốm “{workshop.name}” của bạn chưa được duyệt.{reason} Bạn có thể chỉnh sửa và gửi lại.",
+        "system",
+        None,
+        "workshop",
+    )
     await session.commit()
     await session.refresh(workshop)
     return workshop
@@ -127,6 +151,19 @@ async def approve_product(
                 unlocked=False,
             )
         )
+    from app.api.v1.notifications import create_notification
+
+    workshop = await session.get(Workshop, product.workshop_id)
+    if workshop is not None:
+        create_notification(
+            session,
+            workshop.owner_id,
+            f"Sản phẩm “{product.name}” đã được duyệt",
+            "Sản phẩm của bạn đã được quản trị viên phê duyệt và hiện trên sàn. Hộ chiếu QR đã được tạo tự động.",
+            "system",
+            None,
+            "product",
+        )
     await session.commit()
     await session.refresh(product)
     return product
@@ -145,6 +182,19 @@ async def reject_product(
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     product.status = "draft"
     product.reject_reason = body.reason
+    from app.api.v1.notifications import create_notification
+
+    workshop = await session.get(Workshop, product.workshop_id)
+    if workshop is not None:
+        create_notification(
+            session,
+            workshop.owner_id,
+            f"Sản phẩm “{product.name}” bị từ chối",
+            f"Sản phẩm chưa được duyệt. Lý do: {body.reason}. Vui lòng chỉnh sửa và gửi lại.",
+            "system",
+            None,
+            "product",
+        )
     await session.commit()
     await session.refresh(product)
     return product

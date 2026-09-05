@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Order, Page, Product, RevenuePeriod, TourBooking, Workshop, WorkshopWallet } from "../../types";
+import type { Order, Page, Product, RevenuePeriod, TourBooking, TourSlot, Workshop, WorkshopWallet } from "../../types";
 
 /** Workshop profile của chính mình (role workshop_owner) */
 export function getMyWorkshop(): Promise<Workshop> {
@@ -103,4 +103,8 @@ export function getWorkshopWallet(): Promise<WorkshopWallet> {
 
 export function listWorkshopBookings(workshopId: string): Promise<TourBooking[]> {
   return apiFetch<TourBooking[]>(`/api/v1/tours/workshops/${workshopId}/bookings`);
+}
+
+export function listMyTourSlots(): Promise<TourSlot[]> {
+  return apiFetch<TourSlot[]>("/api/v1/workshop/slots");
 }

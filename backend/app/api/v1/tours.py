@@ -194,5 +194,16 @@ async def mark_attended(
             )
         )
         booking.voucher_issued = True
+        from app.api.v1.notifications import create_notification
+
+        create_notification(
+            session,
+            booking.customer_id,
+            "Tham gia tour thành công — nhận voucher 10%",
+            f"Xưởng xác nhận bạn đã tham gia tour. Mã giảm giá TOUR-{booking.id.hex[:6].upper()} (10%, tối đa 50.000đ) đã vào ví voucher của bạn!",
+            "tour",
+            None,
+            "tour_booking",
+        )
     await session.commit()
     return {"status": booking.status, "voucher_issued": booking.voucher_issued}

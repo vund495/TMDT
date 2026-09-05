@@ -22,6 +22,19 @@ export function bookTour(slotId: string, numGuests = 1): Promise<TourBookingCrea
   });
 }
 
+export function createTourSpot(body: {
+  workshop_id: string;
+  tour_date: string;
+  start_time: string;
+  capacity: number;
+  price_per_guest: number;
+}): Promise<TourSlot[]> {
+  return apiFetch<TourSlot[]>("/api/v1/tours/slots", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 export function listMyBookings(): Promise<TourBooking[]> {
   return apiFetch<TourBooking[]>("/api/v1/tours/bookings");
 }
