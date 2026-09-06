@@ -31,7 +31,7 @@ export default function WorkshopRevenue() {
         </div>
         <div className="rounded-xl border border-ceramic-100 bg-white p-4">
           <div className="text-xs text-gray-500">Hoa hồng nền tảng</div>
-          <div className="mt-1 text-xl font-bold text-brand-dat">
+          <div className="mt-1 text-xl font-bold text-dat-700">
             <Money value={totals.commission} />
           </div>
         </div>

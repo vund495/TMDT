@@ -58,7 +58,7 @@ export default function AdminTours() {
                           Đã phát
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-gray-400">-</span>
                       )}
                     </td>
                   </tr>

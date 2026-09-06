@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Award, Truck } from "lucide-react";
+import { Award, ScanLine, Truck } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../components/ui";
 import { confirmReceipt, cancelOrder, getOrder, getShipmentOfOrder } from "../lib/api";
 
@@ -61,7 +61,7 @@ export default function OrderDetail() {
                     to={`/ho-chieu?code=${encodeURIComponent(i.passport_qr)}`}
                     className="ml-2 inline-flex items-center gap-1 rounded-md bg-brand-lam/10 px-2 py-0.5 text-xs font-semibold text-brand-lam hover:bg-brand-lam/20"
                   >
-                    🪪 QR hộ chiếu: {i.passport_qr}
+                    <ScanLine className="h-3.5 w-3.5" aria-hidden /> QR hộ chiếu: {i.passport_qr}
                   </Link>
                 )}
               </div>
@@ -123,7 +123,7 @@ export default function OrderDetail() {
           <button
             onClick={() => confirm.mutate()}
             disabled={confirm.isPending}
-            className="flex items-center gap-2 rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
           >
             <Award className="h-4 w-4" /> Đã nhận hàng & mở hộ chiếu
           </button>

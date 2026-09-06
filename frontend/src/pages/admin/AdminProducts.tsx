@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Package } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../../components/ui";
 import { approveProduct, listPendingProducts, rejectProduct } from "../../lib/api";
 import type { Product } from "../../types";
@@ -46,8 +47,8 @@ export default function AdminProducts() {
             <div className="space-y-3">
               {data.items.map((p) => (
               <div key={p.id} className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" /> : "🏺"}
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-cream-100">
+                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-6 w-6 text-ink-faint" aria-hidden />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -87,7 +88,7 @@ export default function AdminProducts() {
                 ← Trước
               </button>
               <span className="px-2 text-gray-600">
-                Trang {page} / {totalPages} — {(data?.total ?? 0).toLocaleString("vi-VN")} sản phẩm
+                Trang {page} / {totalPages} - {(data?.total ?? 0).toLocaleString("vi-VN")} sản phẩm
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

@@ -3,14 +3,14 @@ const POLICIES = [
     title: "Giao hàng & vận chuyển",
     color: "from-men-700 to-men-900",
     items: [
-      "Đơn hàng được xử lý và đóng gói trong vòng 24–48h sau khi thanh toán thành công.",
+      "Đơn hàng được xử lý và đóng gói trong vòng 24-48h sau khi thanh toán thành công.",
       "Miễn phí vận chuyển cho đơn từ 1.000.000₫ trong nội thành Hà Nội; các khu vực khác tính phí theo từng đối tác vận chuyển (GHTK, J&T, Viettel Post...).",
-      "Thời gian giao hàng dự kiến 2–5 ngày làm việc trong nước.",
+      "Thời gian giao hàng dự kiến 2-5 ngày làm việc trong nước.",
       "Quý khách có thể theo dõi trạng thái lộ trình đơn hàng trong mục “Đơn hàng của tôi”.",
     ],
   },
   {
-    title: "Chính sách đổi trả — Vỡ 1 đền 1",
+    title: "Chính sách đổi trả - Vỡ 1 đền 1",
     color: "from-dat-700 to-dat-900",
     items: [
       "Sản phẩm gốm sứ được bảo vệ bằng đóng gói chống sốc chuyên dụng đa lớp đạt tiêu chuẩn.",
@@ -24,7 +24,7 @@ const POLICIES = [
     color: "from-green-700 to-green-900",
     items: [
       "Sản phẩm gốm sứ được bảo hành chất lượng trong 12 tháng cho các lỗi kỹ thuật do nhà sản xuất (men không đạt, nứt khi nung...).",
-      "Mỗi sản phẩm đi kèm “Hộ chiếu sản phẩm” QR — minh bạch nguồn gốc, chất liệu và quy trình nung/men.",
+      "Mỗi sản phẩm đi kèm “Hộ chiếu sản phẩm” QR - minh bạch nguồn gốc, chất liệu và quy trình nung/men.",
       "Bảo hành không áp dụng cho hư hại do va đập, rơi vỡ trong quá trình sử dụng.",
     ],
   },
@@ -33,7 +33,7 @@ const POLICIES = [
     color: "from-lam-700 to-lam-900",
     items: [
       "Thanh toán trực tuyến qua VietQR/Casso, đối soát tự động và an toàn.",
-      "Hoàn tiền được xử lý trong 3–7 ngày làm việc kể từ khi khiếu nại được phê duyệt, chuyển về tài khoản/ngân hàng của khách.",
+      "Hoàn tiền được xử lý trong 3-7 ngày làm việc kể từ khi khiếu nại được phê duyệt, chuyển về tài khoản/ngân hàng của khách.",
       "Mọi giao dịch được ghi nhận minh bạch trên hệ thống.", 
     ],
   },

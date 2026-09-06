@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 export default function VnpayResult() {
   const [sp] = useSearchParams();
@@ -11,7 +12,11 @@ export default function VnpayResult() {
 
   return (
     <div className="mx-auto max-w-lg text-center">
-      <div className={ok ? "text-6xl" : "text-6xl"}>{ok ? "✅" : "❌"}</div>
+      {ok ? (
+        <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" aria-hidden />
+      ) : (
+        <XCircle className="mx-auto h-14 w-14 text-red-500" aria-hidden />
+      )}
       <h1 className="mt-3 text-2xl font-bold text-ceramic-900">
         {ok ? "Thanh toán VNPay thành công!" : "Thanh toán VNPay chưa hoàn tất"}
       </h1>
@@ -30,7 +35,7 @@ export default function VnpayResult() {
         {ok && (
           <Link
             to={type === "tour" ? "/tour-cua-toi" : `/don-hang/${ref}`}
-            className="rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90"
+            className="rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800"
           >
             {type === "tour" ? "Xem tour của tôi" : "Xem chi tiết đơn"}
           </Link>
@@ -38,7 +43,7 @@ export default function VnpayResult() {
         {!ok && (
           <Link
             to="/tim-kiem"
-            className="rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90"
+            className="rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800"
           >
             Tiếp tục mua sắm
           </Link>

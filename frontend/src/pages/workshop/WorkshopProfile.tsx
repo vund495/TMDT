@@ -101,12 +101,12 @@ export default function WorkshopProfile() {
         <button
           type="submit"
           disabled={save.isPending || !name}
-          className="w-full rounded-lg bg-brand-dat px-5 py-2.5 font-semibold text-white hover:bg-brand-dat-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
         >
           {save.isPending ? "Đang lưu..." : existing ? "Cập nhật hồ sơ" : "Gửi duyệt xưởng"}
         </button>
         {save.isSuccess && (
-          <p className="text-center text-sm text-green-600">✅ Đã lưu. {existing && existing.status === "pending" ? "Chờ admin duyệt." : ""}</p>
+          <p className="text-center text-sm text-green-600">Đã lưu. {existing && existing.status === "pending" ? "Chờ admin duyệt." : ""}</p>
         )}
         {save.isError && <p className="text-center text-sm text-red-600">{(save.error as Error).message}</p>}
       </form>

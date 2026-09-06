@@ -38,7 +38,7 @@ export default function PassportPage() {
           placeholder="Nhập mã QR trên sản phẩm..."
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
-        <button className="rounded-md bg-brand-lam px-5 py-2 text-sm font-semibold text-white hover:bg-brand-lam/90">
+        <button className="rounded-md bg-dat-700 px-5 py-2 text-sm font-semibold text-white hover:bg-dat-800">
           Tra cứu
         </button>
       </form>
@@ -72,7 +72,7 @@ export default function PassportPage() {
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between border-b border-gray-100 py-1">
                   <span className="text-gray-500">{k}</span>
-                  <span className="font-medium text-ceramic-900">{v || "—"}</span>
+                  <span className="font-medium text-ceramic-900">{v || "-"}</span>
                 </div>
               ))}
             </div>
@@ -81,7 +81,7 @@ export default function PassportPage() {
               {data.unlocked ? (
                 <div className="rounded-lg border border-green-200 bg-green-50 p-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                    <Play className="h-4 w-4" /> Hộ chiếu đã mở khóa — bạn là chủ sở hữu
+                    <Play className="h-4 w-4" /> Hộ chiếu đã mở khóa - bạn là chủ sở hữu
                   </div>
                   {data.video_url ? (
                     <p className="mt-2 text-sm text-gray-700">

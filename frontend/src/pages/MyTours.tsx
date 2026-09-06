@@ -45,7 +45,7 @@ export default function MyTours() {
                 <div className="flex gap-2">
                   {b.status === "pending_payment" && (
                     <span className="rounded-md bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700">
-                      Chờ thanh toán — vui lòng quét QR tại trang đặt tour
+                      Chờ thanh toán - vui lòng quét QR tại trang đặt tour
                     </span>
                   )}
                   {(b.status === "confirmed" || b.status === "pending_payment") && (

@@ -68,7 +68,7 @@ export default function AdminVouchers() {
               <div key={v.code} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-brand-dat/10 px-2 py-0.5 font-mono font-bold text-brand-dat-700">{v.code}</span>
+                    <span className="rounded bg-brand-dat/10 px-2 py-0.5 font-mono font-bold text-dat-700">{v.code}</span>
                     <span className={`text-sm ${v.active ? "text-green-600" : "text-gray-400"}`}>{v.active ? "Hoạt động" : "Tắt"}</span>
                   </div>
                   <p className="mt-1 text-sm text-gray-600">

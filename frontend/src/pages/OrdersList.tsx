@@ -36,7 +36,7 @@ export default function OrdersList() {
                 </div>
                 <div className="text-right">
                   <StatusBadge status={o.status} />
-                  <div className="mt-1 font-semibold text-brand-dat">
+                  <div className="mt-1 font-semibold text-dat-700">
                     <Money value={o.total} />
                   </div>
                 </div>

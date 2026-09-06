@@ -8,6 +8,7 @@ export { default as Field } from "./ui/Field";
 export { default as Toaster } from "./ui/Toaster";
 export { default as Money } from "./ui/Money";
 export { default as Spinner } from "./ui/Spinner";
+export { default as Skeleton } from "./ui/Skeleton";
 export { StatusBadge } from "./ui/StatusBadge";
 export { TONE_BADGE, type Tone } from "../utils/status";
 export * from "../lib/toast";

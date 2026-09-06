@@ -65,7 +65,7 @@ export default function TourPage() {
                     </span>
                   </div>
                   <div className="mt-3">
-                    <Money value={s.price_per_guest} className="text-xl font-bold text-brand-dat" />
+                    <Money value={s.price_per_guest} className="text-xl font-bold text-dat-700" />
                     <span className="text-sm text-gray-500"> / khách</span>
                   </div>
 
@@ -87,7 +87,7 @@ export default function TourPage() {
                         <button
                           disabled={book.isPending || remaining < 1}
                           onClick={() => book.mutate({ id: s.id, n: ng })}
-                          className="flex-1 rounded-lg bg-brand-lam px-4 py-2 text-sm font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
+                          className="flex-1 rounded-lg bg-dat-700 px-4 py-2 text-sm font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
                         >
                           {remaining < 1 ? "Hết chỗ" : "Đặt tour"}
                         </button>
@@ -95,7 +95,7 @@ export default function TourPage() {
                     ) : (
                       <button
                         onClick={() => navigate("/dang-nhap")}
-                        className="flex-1 rounded-lg bg-brand-lam px-4 py-2 text-sm font-semibold text-white"
+                        className="flex-1 rounded-lg bg-dat-700 px-4 py-2 text-sm font-semibold text-white"
                       >
                         Đăng nhập để đặt
                       </button>
@@ -138,7 +138,7 @@ export default function TourPage() {
                     .then((r) => window.location.assign(r.pay_url))
                     .catch(() => navigate("/tour-cua-toi"));
                 }}
-                className="flex-1 rounded-lg bg-brand-lam px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-lam/90"
+                className="flex-1 rounded-lg bg-dat-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-dat-800"
               >
                 Thanh toán VNPay
               </button>

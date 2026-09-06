@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Amphora, Bell, ShoppingCart } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { getCart, listNotifications, markNotificationRead } from "../../lib/api";
 import { useLocalCart } from "../../store/localCartStore";
@@ -65,8 +65,8 @@ export default function CustomerLayout() {
       >
         <div className="mx-auto flex h-16 w-full max-w-[1500px] items-center gap-4 px-4">
           <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-men-700 text-lg text-white">
-              🏺
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-dat-700 text-white">
+              <Amphora className="h-5 w-5" aria-hidden />
             </span>
             <span className="text-xl font-extrabold tracking-tight text-ink">VietCraft Bát Tràng</span>
           </Link>
@@ -99,7 +99,7 @@ export default function CustomerLayout() {
                 >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-men-700 px-1 text-[10px] font-bold text-white">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-dat-700 px-1 text-[10px] font-bold text-white">
                       {unreadCount}
                     </span>
                   )}
@@ -155,9 +155,9 @@ export default function CustomerLayout() {
               className="relative flex h-10 w-10 items-center justify-center rounded-md text-ink hover:bg-cream-100"
               title="Giỏ hàng"
             >
-              🛒
+              <ShoppingCart className="h-5 w-5" aria-hidden />
               {cartCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-men-700 px-1 text-[10px] font-bold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-dat-700 px-1 text-[10px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
@@ -264,8 +264,8 @@ export default function CustomerLayout() {
         <div className="mx-auto w-full max-w-[1500px] gap-12 px-4 py-16 sm:grid sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-men-700 text-white">
-                🏺
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-dat-700 text-white">
+                <Amphora className="h-4 w-4" aria-hidden />
               </span>
               <span className="font-extrabold text-ink">VietCraft Bát Tràng</span>
             </div>
@@ -305,17 +305,17 @@ export default function CustomerLayout() {
           </div>
         </div>
         <div className="border-t border-border-soft py-4 text-center text-xs text-ink-faint">
-          © 2026 VietCraft Bát Tràng — Sàn gốm sứ Bát Tràng
+          © 2026 VietCraft Bát Tràng - Sàn gốm sứ Bát Tràng
         </div>
       </footer>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-bg-ink/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-md">
           <div className="absolute top-0 left-0 right-0 h-24 border-b border-border-soft bg-bg-paper">
             <div className="mx-auto max-w-[1500px] h-full px-4 flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-men-700 text-lg text-white">
-                  🏺
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-dat-700 text-white">
+                  <Amphora className="h-4 w-4" aria-hidden />
                 </span>
                 <span className="text-xl font-extrabold tracking-tight text-ink">VietCraft Bát Tràng</span>
               </Link>

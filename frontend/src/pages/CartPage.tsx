@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ShoppingCart } from "lucide-react";
+import { Package, ShoppingCart } from "lucide-react";
 import { EmptyState, Money, Spinner } from "../components/ui";
 import { getCart, removeCartItem, updateCartItem } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
@@ -47,12 +47,12 @@ export default function CartPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {localItems.map((item) => (
-            <div key={item.product_id} className="flex gap-4 rounded-xl border border-ceramic-100 bg-white p-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+            <div key={item.product_id} className="flex gap-4 rounded-lg border border-cream-200 bg-white p-4">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-cream-100">
                 {item.product_image ? (
                   <img src={item.product_image} alt={item.product_name || ""} className="h-full w-full object-cover" />
                 ) : (
-                  "🏺"
+                  <Package className="h-8 w-8 text-ink-faint" aria-hidden />
                 )}
               </div>
               <div className="flex-1">
@@ -86,7 +86,7 @@ export default function CartPage() {
                   </button>
                 </div>
               </div>
-              <div className="text-right font-semibold text-brand-dat">
+              <div className="text-right font-semibold text-dat-700">
                 <Money value={item.unit_price * item.quantity} />
               </div>
             </div>
@@ -111,12 +111,12 @@ export default function CartPage() {
           </div>
           <button
             onClick={() => navigate("/dang-nhap")}
-            className="mt-4 block w-full rounded-lg bg-brand-lam px-5 py-2.5 text-center font-semibold text-white hover:bg-brand-lam/90"
+            className="mt-4 block w-full rounded-lg bg-dat-700 px-5 py-2.5 text-center font-semibold text-white hover:bg-dat-800"
           >
             Đăng nhập để thanh toán
           </button>
           <p className="mt-2 text-xs text-gray-500">
-            Giỏ hàng đang lưu trên máy — sau khi đăng nhập sẽ được đồng bộ.
+            Giỏ hàng đang lưu trên máy - sau khi đăng nhập sẽ được đồng bộ.
           </p>
         </div>
       </div>
@@ -137,12 +137,12 @@ export default function CartPage() {
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-3 lg:col-span-2">
         {(cart.data!.items ?? []).map((item) => (
-          <div key={item.id} className="flex gap-4 rounded-xl border border-ceramic-100 bg-white p-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+          <div key={item.id} className="flex gap-4 rounded-lg border border-cream-200 bg-white p-4">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-cream-100">
               {item.product_image ? (
                 <img src={item.product_image} alt={item.product_name || ""} className="h-full w-full object-cover" />
               ) : (
-                "🏺"
+                <Package className="h-8 w-8 text-ink-faint" aria-hidden />
               )}
             </div>
             <div className="flex-1">
@@ -176,7 +176,7 @@ export default function CartPage() {
                 </button>
               </div>
             </div>
-            <div className="text-right font-semibold text-brand-dat">
+            <div className="text-right font-semibold text-dat-700">
               <Money value={item.subtotal ?? 0} />
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function CartPage() {
         </div>
         <Link
           to="/thanh-toan"
-          className="mt-4 block rounded-lg bg-brand-lam px-5 py-2.5 text-center font-semibold text-white hover:bg-brand-lam/90"
+          className="mt-4 block rounded-lg bg-dat-700 px-5 py-2.5 text-center font-semibold text-white hover:bg-dat-800"
         >
           Đặt hàng & thanh toán
         </Link>

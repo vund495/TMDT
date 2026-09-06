@@ -24,7 +24,7 @@ export default function WorkshopWallet() {
       label: "Hoa hồng nền tảng",
       value: <Money value={data.total_commission} />,
       icon: Landmark,
-      cls: "text-brand-dat",
+      cls: "text-dat-700",
     },
     {
       label: "Số tiền xưởng nhận về",
@@ -76,7 +76,7 @@ export default function WorkshopWallet() {
                     <td className="px-4 py-3 font-medium">{r.period}</td>
                     <td className="px-4 py-3 text-right text-gray-600">{r.paid_orders}</td>
                     <td className="px-4 py-3 text-right"><Money value={r.gross_amount} /></td>
-                    <td className="px-4 py-3 text-right text-brand-dat"><Money value={r.commission_amount} /></td>
+                    <td className="px-4 py-3 text-right text-dat-700"><Money value={r.commission_amount} /></td>
                     <td className="px-4 py-3 text-right font-semibold text-green-700"><Money value={r.payout_amount} /></td>
                   </tr>
                 ))}

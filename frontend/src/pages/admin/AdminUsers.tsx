@@ -14,7 +14,7 @@ const ROLE_LABEL: Record<string, string> = {
 const ROLES: Array<Role | "all"> = ["all", "customer", "workshop_owner", "admin"];
 
 function fmtDate(d?: string) {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleDateString("vi-VN").slice(0, 10);
 }
 
@@ -70,7 +70,7 @@ export default function AdminUsers() {
               className="w-72 rounded-md border border-gray-300 py-2 pl-9 pr-3 text-sm"
             />
           </div>
-          <button className="rounded-md bg-brand-lam px-4 py-2 text-sm font-semibold text-white hover:bg-brand-lam/90">
+          <button className="rounded-md bg-dat-700 px-4 py-2 text-sm font-semibold text-white hover:bg-dat-800">
             Tìm
           </button>
         </form>
@@ -120,13 +120,13 @@ export default function AdminUsers() {
                 {current.map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{u.full_name || "—"}</p>
+                      <p className="font-medium text-gray-900">{u.full_name || "-"}</p>
                       <p className="text-xs text-gray-500">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded-md bg-gray-100 px-2 py-1 text-xs">{ROLE_LABEL[u.role] ?? u.role}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">{u.workshop_name || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600">{u.workshop_name || "-"}</td>
                     <td className="px-4 py-3 text-right">{u.orders_count ?? 0}</td>
                     <td className="px-4 py-3 text-right">
                       <Money value={u.total_spent ?? 0} />
@@ -157,7 +157,7 @@ export default function AdminUsers() {
         {!isLoading && !isError && current.length > 0 && (
           <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
             <span>
-              Trang {page} / {totalPages} — {(data?.total ?? 0).toLocaleString("vi-VN")} người dùng
+              Trang {page} / {totalPages} - {(data?.total ?? 0).toLocaleString("vi-VN")} người dùng
             </span>
             <div className="flex gap-2">
               <button

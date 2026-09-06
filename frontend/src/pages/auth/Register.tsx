@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Amphora, Eye, EyeOff, ShoppingBag, type LucideIcon } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { Button, Field } from "../../components/ui";
 import { toastError, toastOk } from "../../lib/toast";
@@ -40,9 +40,9 @@ export default function Register() {
     }
   }
 
-  const roles: { value: "customer" | "workshop_owner"; label: string; icon: string }[] = [
-    { value: "customer", label: "Khách mua hàng", icon: "🛍️" },
-    { value: "workshop_owner", label: "Chủ xưởng gốm", icon: "🏺" },
+  const roles: { value: "customer" | "workshop_owner"; label: string; icon: LucideIcon }[] = [
+    { value: "customer", label: "Khách mua hàng", icon: ShoppingBag },
+    { value: "workshop_owner", label: "Chủ xưởng gốm", icon: Amphora },
   ];
 
   return (
@@ -87,7 +87,7 @@ export default function Register() {
                 role === r.value ? "border-dat-700 bg-dat-50" : "border-cream-200 hover:border-dat-700"
               }`}
             >
-              <span className="text-xl">{r.icon}</span>
+              <r.icon className="h-5 w-5 text-dat-700" aria-hidden />
               <span className="text-sm font-semibold text-ink">{r.label}</span>
             </button>
           ))}

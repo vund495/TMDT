@@ -26,7 +26,7 @@ export default function AdminReconcile() {
           <div>
             <div className="text-xs text-gray-500">Doanh thu nền tảng hiện tại</div>
             <div className="mt-1 text-xl font-bold text-gray-900">
-              {stats.isLoading ? "—" : <Money value={stats.data?.total_revenue ?? 0} />}
+              {stats.isLoading ? "-" : <Money value={stats.data?.total_revenue ?? 0} />}
             </div>
           </div>
           <button
@@ -47,12 +47,12 @@ export default function AdminReconcile() {
               {result.consistent ? (
                 <>
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  <span className="text-green-700">Khớp — doanh thu nhất quán</span>
+                  <span className="text-green-700">Khớp - doanh thu nhất quán</span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-red-700">Chênh lệch — cần kiểm tra</span>
+                  <span className="text-red-700">Chênh lệch - cần kiểm tra</span>
                 </>
               )}
             </div>

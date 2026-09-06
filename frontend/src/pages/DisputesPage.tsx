@@ -41,7 +41,7 @@ export default function DisputesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-ceramic-900">Khiếu nại — Vỡ 1 đền 1</h1>
+      <h1 className="text-2xl font-bold text-ceramic-900">Khiếu nại - Vỡ 1 đền 1</h1>
 
       {isCustomer && (
         <form
@@ -80,14 +80,14 @@ export default function DisputesPage() {
           <button
             type="submit"
             disabled={create.isPending || !orderId || !reason}
-            className="rounded-lg bg-brand-dat px-5 py-2.5 font-semibold text-white hover:bg-brand-dat-700 disabled:opacity-50"
+            className="rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
           >
             {create.isPending ? "Đang gửi..." : "Gửi khiếu nại"}
           </button>
           {create.isError && (
             <p className="text-sm text-red-600">{(create.error as Error).message}</p>
           )}
-          {create.isSuccess && <p className="text-sm text-green-600">✅ Khiếu nại đã gửi.</p>}
+          {create.isSuccess && <p className="text-sm text-green-600">Khiếu nại đã gửi.</p>}
         </form>
       )}
 

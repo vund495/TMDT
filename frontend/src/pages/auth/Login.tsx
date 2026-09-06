@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Amphora, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/ui";
 import { toastError, toastOk } from "../../lib/toast";
@@ -38,8 +38,8 @@ export default function Login() {
     <div className="mx-auto max-w-md py-10">
       <div className="rounded-2xl border border-cream-200 bg-white p-6 shadow-card">
         <div className="text-center">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-dat-700 text-2xl text-white">
-            🏺
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-dat-700 text-white">
+            <Amphora className="h-6 w-6" aria-hidden />
           </span>
           <h1 className="mt-3 text-xl font-extrabold text-ink">Đăng nhập VietCraft Bát Tràng</h1>
           <p className="mt-1 text-sm text-ink-soft">Nhập email và mật khẩu để tiếp tục</p>

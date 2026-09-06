@@ -40,7 +40,7 @@ export default function WorkshopOrders() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <Money value={o.total} className="font-bold text-brand-dat" />
+                    <Money value={o.total} className="font-bold text-dat-700" />
                     <div className="mt-2">
                       {o.status === "pending_payment" && (
                         <span className="text-xs text-gray-400">Chờ khách thanh toán</span>
@@ -49,7 +49,7 @@ export default function WorkshopOrders() {
                         <button
                           onClick={() => ship.mutate(o.id)}
                           disabled={ship.isPending}
-                          className="rounded-md bg-brand-dat px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dat-700 disabled:opacity-50"
+                          className="rounded-md bg-dat-700 px-4 py-2 text-sm font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
                         >
                           Xác nhận đã giao hàng
                         </button>

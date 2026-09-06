@@ -47,8 +47,8 @@ export const USER_STATUS: Record<"active" | "blocked", { label: string; tone: To
 };
 
 export const RESOLUTION_LABEL: Record<string, string> = {
-  approved: "Chấp thuận — hoàn tiền",
-  reship: "Chấp thuận — gửi hàng thay thế",
+  approved: "Chấp thuận - hoàn tiền",
+  reship: "Chấp thuận - gửi hàng thay thế",
   rejected: "Từ chối",
 };
 

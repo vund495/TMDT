@@ -30,7 +30,7 @@ export default function ContactPage() {
         <MapEmbed address="Làng gốm Bát Tràng, Gia Lâm, Hà Nội" className="h-64 w-full" />
       </div>
       <p className="mt-2 text-xs text-gray-500">
-        🏺 Làng gốm Bát Tràng, Gia Lâm, Hà Nội · hotro@vietcraft.vn
+        Làng gốm Bát Tràng, Gia Lâm, Hà Nội · hotro@vietcraft.vn
       </p>
 
       <form
@@ -68,11 +68,11 @@ export default function ContactPage() {
         <button
           type="submit"
           disabled={send.isPending}
-          className="rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
+          className="rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
         >
           {send.isPending ? "Đang gửi..." : "Gửi"}
         </button>
-        {send.isSuccess && <p className="text-sm text-green-600">✅ Cảm ơn! Chúng tôi đã nhận được phản hồi.</p>}
+        {send.isSuccess && <p className="text-sm text-green-600">Cảm ơn! Chúng tôi đã nhận được phản hồi.</p>}
         {send.isError && <p className="text-sm text-red-600">{(send.error as Error).message}</p>}
       </form>
     </div>

@@ -14,8 +14,8 @@ export default function AdminDisputes() {
   const [note, setNote] = useState("");
 
   const RESOLUTION_OPTIONS: Array<{ value: string; label: string }> = [
-    { value: "approved", label: "Chấp thuận — hoàn tiền" },
-    { value: "reship", label: "Chấp thuận — gửi hàng thay thế" },
+    { value: "approved", label: "Chấp thuận - hoàn tiền" },
+    { value: "reship", label: "Chấp thuận - gửi hàng thay thế" },
     { value: "rejected", label: "Từ chối" },
   ];
 

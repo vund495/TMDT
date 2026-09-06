@@ -86,7 +86,7 @@ export default function WorkshopTours() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-1 rounded-lg bg-brand-dat px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dat-700"
+          className="flex items-center gap-1 rounded-lg bg-dat-700 px-4 py-2 text-sm font-semibold text-white hover:bg-dat-800"
         >
           <CalendarPlus className="h-4 w-4" /> Tạo suất tour
         </button>
@@ -110,10 +110,10 @@ export default function WorkshopTours() {
                     <p className="text-sm font-bold text-ceramic-900">
                       {new Date(s.tour_date + "T00:00:00").toLocaleDateString("vi-VN")}
                     </p>
-                    <Money value={s.price_per_guest} className="text-sm font-bold text-brand-dat" />
+                    <Money value={s.price_per_guest} className="text-sm font-bold text-dat-700" />
                   </div>
                   <p className="mt-1 text-sm text-gray-600">
-                    {s.start_time.slice(0, 5)} — {s.capacity} chỗ
+                    {s.start_time.slice(0, 5)} - {s.capacity} chỗ
                   </p>
                   <div className="mt-2">
                     <span
@@ -159,12 +159,12 @@ export default function WorkshopTours() {
                     <p className="mt-1 text-sm text-gray-600">{b.num_guests} khách</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Money value={b.total_amount} className="font-bold text-brand-dat" />
+                    <Money value={b.total_amount} className="font-bold text-dat-700" />
                     {b.status === "confirmed" && (
                       <button
                         onClick={() => attend.mutate(b.id)}
                         disabled={attend.isPending}
-                        className="rounded-md bg-brand-lam px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
+                        className="rounded-md bg-dat-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
                       >
                         Xác nhận tham dự
                       </button>
@@ -236,7 +236,7 @@ export default function WorkshopTours() {
               <button
                 type="submit"
                 disabled={!validForm || createSlot.isPending}
-                className="rounded-md bg-brand-dat px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="rounded-md bg-dat-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {createSlot.isPending ? "Đang tạo…" : "Tạo suất tour"}
               </button>

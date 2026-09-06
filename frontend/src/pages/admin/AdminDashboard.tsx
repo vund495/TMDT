@@ -6,18 +6,18 @@ import { getStats, listPendingProducts, listPendingWorkshops } from "../../lib/a
 export default function AdminDashboard() {
   const stats = useQuery({ queryKey: ["admin-stats"], queryFn: getStats });
   const pws = useQuery({ queryKey: ["admin-pending-w"], queryFn: listPendingWorkshops });
-  const pps = useQuery({ queryKey: ["admin-pending-p"], queryFn: listPendingProducts });
+  const pps = useQuery({ queryKey: ["admin-pending-p"], queryFn: () => listPendingProducts() });
 
   if (stats.isLoading) return <Spinner />;
 
   const s = stats.data;
 
   const cards = [
-    { label: "Doanh thu nền tảng", value: s ? s.total_revenue.toLocaleString("vi-VN") + "₫" : "—", icon: DollarSign },
-    { label: "Đơn hàng", value: String(s?.orders_count ?? "—"), icon: Package },
-    { label: "Xưởng gốm", value: String(s?.workshops_count ?? "—"), icon: Store },
-    { label: "Khách hàng", value: String(s?.customers_count ?? "—"), icon: Users },
-    { label: "Khiếu nại chờ xử lý", value: String(s?.disputes_pending ?? "—"), icon: ShieldAlert },
+    { label: "Doanh thu nền tảng", value: s ? s.total_revenue.toLocaleString("vi-VN") + "₫" : "-", icon: DollarSign },
+    { label: "Đơn hàng", value: String(s?.orders_count ?? "-"), icon: Package },
+    { label: "Xưởng gốm", value: String(s?.workshops_count ?? "-"), icon: Store },
+    { label: "Khách hàng", value: String(s?.customers_count ?? "-"), icon: Users },
+    { label: "Khiếu nại chờ xử lý", value: String(s?.disputes_pending ?? "-"), icon: ShieldAlert },
   ];
 
   return (

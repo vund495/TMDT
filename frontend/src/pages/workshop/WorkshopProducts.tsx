@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Plus, QrCode, Trash2, X } from "lucide-react";
+import { ImagePlus, Package, Plus, QrCode, Trash2, X } from "lucide-react";
 import { EmptyState, Money, Spinner, StatusBadge } from "../../components/ui";
 import { createProduct, deleteProduct, listMyProducts, publishProduct, updateProduct, uploadFile } from "../../lib/api";
 import type { Product } from "../../types";
@@ -116,7 +116,7 @@ export default function WorkshopProducts() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-ceramic-900">Sản phẩm của tôi</h1>
-        <button onClick={openNew} className="flex items-center gap-1 rounded-lg bg-brand-dat px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dat-700">
+        <button onClick={openNew} className="flex items-center gap-1 rounded-lg bg-dat-700 px-4 py-2 text-sm font-semibold text-white hover:bg-dat-800">
           <Plus className="h-4 w-4" /> Thêm sản phẩm
         </button>
       </div>
@@ -131,8 +131,8 @@ export default function WorkshopProducts() {
           <div className="space-y-3">
             {products.data.items.map((p) => (
               <div key={p.id} className="flex items-center gap-4 rounded-xl border border-ceramic-100 bg-white p-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" /> : "🏺"}
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-cream-100">
+                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" /> : <Package className="h-6 w-6 text-ink-faint" aria-hidden />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function WorkshopProducts() {
                     <button
                       onClick={() => publish.mutate(p.id)}
                       disabled={publish.isPending}
-                      className="rounded-md bg-brand-lam px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-lam/90 disabled:opacity-50"
+                      className="rounded-md bg-dat-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-dat-800 disabled:opacity-50"
                     >
                       Gửi duyệt
                     </button>
@@ -192,7 +192,7 @@ export default function WorkshopProducts() {
               ← Trước
             </button>
             <span className="px-2 text-gray-600">
-              Trang {page} / {totalPages} — {(products.data?.total ?? 0).toLocaleString("vi-VN")} sản phẩm
+              Trang {page} / {totalPages} - {(products.data?.total ?? 0).toLocaleString("vi-VN")} sản phẩm
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -274,7 +274,7 @@ export default function WorkshopProducts() {
               <button type="button" onClick={() => setShowForm(false)} className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700">
                 Hủy
               </button>
-              <button type="submit" disabled={save.isPending} className="rounded-md bg-brand-dat px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              <button type="submit" disabled={save.isPending} className="rounded-md bg-dat-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
                 {save.isPending ? "Đang lưu..." : "Lưu"}
               </button>
             </div>
@@ -330,11 +330,11 @@ export default function WorkshopProducts() {
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(qrFor.passport_qr);
+                  navigator.clipboard.writeText(qrFor.passport_qr ?? "");
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1500);
                 }}
-                className="rounded-md bg-brand-lam px-4 py-2 text-sm font-semibold text-white hover:bg-brand-lam/90"
+                className="rounded-md bg-dat-700 px-4 py-2 text-sm font-semibold text-white hover:bg-dat-800"
               >
                 {copied ? "Đã copy" : "Copy mã"}
               </button>

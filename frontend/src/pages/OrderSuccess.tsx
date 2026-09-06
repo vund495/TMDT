@@ -29,7 +29,7 @@ export default function OrderSuccess() {
         <h2 className="font-semibold text-ceramic-900">Thanh toán VietQR</h2>
         <p className="mt-1 text-sm text-gray-600">
           Quét mã bên dưới bằng app ngân hàng để thanh toán{" "}
-          <Money value={data.order.total} className="font-bold text-brand-dat" />.
+          <Money value={data.order.total} className="font-bold text-dat-700" />.
         </p>
         {data.qr_url ? (
           <img
@@ -50,7 +50,7 @@ export default function OrderSuccess() {
       <div className="mt-6 flex justify-center gap-3">
         <Link
           to={`/don-hang/${data.order.id}`}
-          className="rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90"
+          className="rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800"
         >
           Xem chi tiết đơn
         </Link>

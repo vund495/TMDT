@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Palette, Package, Receipt } from "lucide-react";
+import { AlertTriangle, Palette, Package, Receipt, Star } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../../components/ui";
 import {
   getMyWorkshop,
@@ -35,7 +35,7 @@ export default function WorkshopDashboard() {
         <p className="mt-2 text-sm text-amber-700/80">
           Hoàn thiện hồ sơ xưởng gốm của bạn để bắt đầu đăng sản phẩm và nhận đơn hàng.
         </p>
-        <Link to="/xuong/ho-so" className="mt-4 inline-block rounded-lg bg-brand-dat px-5 py-2.5 font-semibold text-white hover:bg-brand-dat-700">
+        <Link to="/xuong/ho-so" className="mt-4 inline-block rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800">
           Tạo hồ sơ xưởng
         </Link>
       </div>
@@ -56,7 +56,10 @@ export default function WorkshopDashboard() {
           <h1 className="text-2xl font-bold text-ceramic-900">{w.name}</h1>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={w.status} />
-            <span className="text-sm text-gray-500">★ {w.rating_avg?.toFixed?.(1) ?? "0.0"}</span>
+            <span className="flex items-center gap-1 text-sm text-gray-500">
+              <Star className="h-3.5 w-3.5 fill-dat-400 text-dat-400" aria-hidden />
+              {w.rating_avg?.toFixed?.(1) ?? "0.0"}
+            </span>
           </div>
         </div>
         <Link to="/xuong/ho-so" className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -72,7 +75,7 @@ export default function WorkshopDashboard() {
           { label: "Doanh thu nhận về", value: totalRevenue.toLocaleString("vi-VN") + "₫", icon: Palette, to: "/xuong/doanh-thu" },
         ].map(({ label, value, icon: Icon, to }) => (
           <Link key={label} to={to} className="rounded-xl border border-ceramic-100 bg-white p-4 shadow-sm transition hover:shadow-md">
-            <Icon className="h-5 w-5 text-brand-dat" />
+            <Icon className="h-5 w-5 text-dat-700" />
             <div className="mt-3 text-xl font-bold text-ceramic-900">{value}</div>
             <div className="text-xs text-gray-500">{label}</div>
           </Link>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { QrCode, Star, Truck } from "lucide-react";
+import { Package, QrCode, Star, Truck } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../components/ui";
 import {
   addToCart,
@@ -86,7 +86,9 @@ export default function ProductDetail() {
           {p.images?.[0] ? (
             <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex aspect-square items-center justify-center text-8xl">🏺</div>
+            <div className="flex aspect-square items-center justify-center bg-cream-100">
+              <Package className="h-16 w-16 text-ink-faint" aria-hidden />
+            </div>
           )}
         </div>
 
@@ -100,7 +102,7 @@ export default function ProductDetail() {
           )}
 
           <div className="mt-4 flex items-baseline gap-3">
-            <Money value={price} className="text-2xl font-bold text-brand-dat" />
+            <Money value={price} className="text-2xl font-bold text-dat-700" />
             {p.sale_price != null && (
               <Money value={p.original_price} className="text-gray-400 line-through" />
             )}
@@ -117,7 +119,7 @@ export default function ProductDetail() {
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg bg-gray-50 px-3 py-2">
                 <div className="text-xs text-gray-500">{k}</div>
-                <div className="font-medium text-ceramic-900">{v || "—"}</div>
+                <div className="font-medium text-ceramic-900">{v || "-"}</div>
               </div>
             ))}
           </div>
@@ -130,7 +132,7 @@ export default function ProductDetail() {
             <div className="text-sm">
               <div className="font-medium text-brand-lam">Hộ chiếu sản phẩm</div>
               <div className="text-xs text-gray-600">
-                Nguồn gốc, nhiệt độ nung & video nghệ nhân — mở khóa sau khi nhận hàng.
+                Nguồn gốc, nhiệt độ nung & video nghệ nhân - mở khóa sau khi nhận hàng.
               </div>
             </div>
           </div>
@@ -144,7 +146,7 @@ export default function ProductDetail() {
             <button
               disabled={addCart.isPending || p.stock <= 0}
               onClick={() => handleAdd(qty)}
-              className="flex-1 rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
+              className="flex-1 rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
             >
               {p.stock <= 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
             </button>
@@ -201,7 +203,7 @@ export default function ProductDetail() {
                 className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm"
                 rows={2}
               />
-              <button type="submit" disabled={postReview.isPending} className="mt-2 rounded-md bg-brand-lam px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+              <button type="submit" disabled={postReview.isPending} className="mt-2 rounded-md bg-dat-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
                 {postReview.isPending ? "Đang gửi..." : "Gửi đánh giá"}
               </button>
               {postReview.isError && <p className="mt-1 text-xs text-red-600">{(postReview.error as Error).message}</p>}
@@ -235,7 +237,7 @@ export default function ProductDetail() {
                 placeholder="Viết bình luận..."
                 className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
-              <button type="submit" disabled={postComment.isPending} className="rounded-md bg-brand-lam px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+              <button type="submit" disabled={postComment.isPending} className="rounded-md bg-dat-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
                 Gửi
               </button>
             </form>

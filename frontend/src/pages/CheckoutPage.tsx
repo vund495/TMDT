@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Money, Spinner, toastError } from "../components/ui";
+import { Field, Money, Spinner, toastError } from "../components/ui";
 import { createOrder, getCart, createVnpayPayment, validateVoucher } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 
@@ -18,12 +18,17 @@ export default function CheckoutPage() {
   const [voucher, setVoucher] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
   const [payMethod, setPayMethod] = useState<"vnpay" | "vietqr">("vnpay");
+  const [tried, setTried] = useState(false);
+  const phoneDigits = receiverPhone.replace(/\D/g, "");
+  const nameError = tried && !receiverName.trim() ? "Nhập họ tên người nhận" : undefined;
+  const phoneError = tried && phoneDigits.length < 9 ? "Nhập số điện thoại (ít nhất 9 chữ số)" : undefined;
+  const addressError = tried && !shippingAddress.trim() ? "Nhập địa chỉ giao hàng" : undefined;
 
   const checkVoucher = useMutation({
     mutationFn: () => validateVoucher(voucher),
     onSuccess: (d) =>
-      setVoucherMsg(d.valid ? `✅ ${d.message} (giảm ${d.discount_percent}%)` : `❌ ${d.message}`),
-    onError: (e) => setVoucherMsg(`❌ ${(e as Error).message}`),
+      setVoucherMsg(d.valid ? `${d.message} (giảm ${d.discount_percent}%)` : (d.message ?? "Mã không hợp lệ")),
+    onError: (e) => setVoucherMsg((e as Error).message),
   });
 
   const placeOrder = useMutation({
@@ -60,7 +65,7 @@ export default function CheckoutPage() {
         <p className="text-lg font-semibold text-ceramic-900">Vui lòng đăng nhập để thanh toán.</p>
         <Link
           to="/dang-nhap"
-          className="mt-4 inline-block rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90"
+          className="mt-4 inline-block rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800"
         >
           Đăng nhập
         </Link>
@@ -69,10 +74,11 @@ export default function CheckoutPage() {
 
   if (cart.isLoading) return <Spinner />;
   if (!cart.data || cart.data.items.length === 0)
-    return <p className="text-gray-600">Giỏ hàng trống — hãy <a href="/tim-kiem" className="text-brand-lam underline">chọn sản phẩm</a>.</p>;
+    return <p className="text-gray-600">Giỏ hàng trống - hãy <a href="/tim-kiem" className="text-brand-lam underline">chọn sản phẩm</a>.</p>;
 
   const submitOrder = () => {
-    if (!receiverName || !receiverPhone || !shippingAddress) return;
+    setTried(true);
+    if (!receiverName.trim() || phoneDigits.length < 9 || !shippingAddress.trim()) return;
     placeOrder.mutate();
   };
 
@@ -82,23 +88,27 @@ export default function CheckoutPage() {
         <section className="rounded-xl border border-ceramic-100 bg-white p-5">
           <h2 className="font-semibold text-ceramic-900">Thông tin nhận hàng</h2>
           <div className="mt-3 space-y-3">
-            <input
+            <Field
+              label="Họ tên người nhận"
               value={receiverName}
               onChange={(e) => setReceiverName(e.target.value)}
-              placeholder="Họ tên người nhận *"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              placeholder="Nguyễn Văn An"
+              error={nameError}
             />
-            <input
+            <Field
+              label="Số điện thoại"
               value={receiverPhone}
               onChange={(e) => setReceiverPhone(e.target.value)}
-              placeholder="Số điện thoại *"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              placeholder="09xx xxx xxx"
+              inputMode="tel"
+              error={phoneError}
             />
-            <input
+            <Field
+              label="Địa chỉ giao hàng"
               value={shippingAddress}
               onChange={(e) => setShippingAddress(e.target.value)}
-              placeholder="Địa chỉ giao hàng *"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh"
+              error={addressError}
             />
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" checked={antiShock} onChange={(e) => setAntiShock(e.target.checked)} />
@@ -109,20 +119,21 @@ export default function CheckoutPage() {
 
         <section className="rounded-xl border border-ceramic-100 bg-white p-5">
           <h2 className="font-semibold text-ceramic-900">Mã giảm giá</h2>
-          <div className="mt-3 flex gap-2">
-            <input
-              value={voucher}
-              onChange={(e) => setVoucher(e.target.value.toUpperCase())}
-              placeholder="Nhập mã (VD: GIAM10)"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm uppercase"
-            />
-            <button
-              onClick={() => voucher && checkVoucher.mutate()}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-            >
-              Áp dụng
-            </button>
-          </div>
+          <Field
+            label="Mã giảm giá"
+            value={voucher}
+            onChange={(e) => setVoucher(e.target.value.toUpperCase())}
+            placeholder="Nhập mã (VD: GIAM10)"
+            input="uppercase"
+            trailing={
+              <button
+                onClick={() => voucher && checkVoucher.mutate()}
+                className="text-sm font-semibold text-dat-700 hover:text-dat-800"
+              >
+                Áp dụng
+              </button>
+            }
+          />
           {voucherMsg && <p className="mt-2 text-sm">{voucherMsg}</p>}
         </section>
       <section className="rounded-xl border border-ceramic-100 bg-white p-5">
@@ -130,7 +141,7 @@ export default function CheckoutPage() {
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm ${
-                payMethod === "vnpay" ? "border-brand-lam bg-brand-lam/5" : "border-gray-200 bg-white"
+                payMethod === "vnpay" ? "border-dat-600 bg-dat-50" : "border-gray-200 bg-white"
               }`}
             >
               <input
@@ -138,8 +149,9 @@ export default function CheckoutPage() {
                 name="pay"
                 checked={payMethod === "vnpay"}
                 onChange={() => setPayMethod("vnpay")}
-                className="accent-brand-lam"
+                className="accent-dat-600"
               />
+              <img src="/images/vnpay.png" alt="VNPay" className="h-9 w-24 shrink-0 rounded-md object-contain" />
               <span>
                 <span className="font-semibold text-ceramic-900">VNPay</span>
                 <br />
@@ -148,7 +160,7 @@ export default function CheckoutPage() {
             </label>
             <label
               className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm ${
-                payMethod === "vietqr" ? "border-brand-lam bg-brand-lam/5" : "border-gray-200 bg-white"
+                payMethod === "vietqr" ? "border-dat-600 bg-dat-50" : "border-gray-200 bg-white"
               }`}
             >
               <input
@@ -156,8 +168,9 @@ export default function CheckoutPage() {
                 name="pay"
                 checked={payMethod === "vietqr"}
                 onChange={() => setPayMethod("vietqr")}
-                className="accent-brand-lam"
+                className="accent-dat-600"
               />
+              <img src="/images/vietqr.png" alt="VietQR" className="h-9 w-24 shrink-0 rounded-md object-contain" />
               <span>
                 <span className="font-semibold text-ceramic-900">VietQR</span>
                 <br />
@@ -193,7 +206,7 @@ export default function CheckoutPage() {
         <button
           onClick={submitOrder}
           disabled={placeOrder.isPending}
-          className="mt-4 w-full rounded-lg bg-brand-lam px-5 py-2.5 font-semibold text-white hover:bg-brand-lam/90 disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800 disabled:opacity-50"
         >
           {placeOrder.isPending ? "Đang tạo đơn..." : payMethod === "vnpay" ? "Tạo đơn & thanh toán qua VNPay" : "Tạo đơn & thanh toán VietQR"}
         </button>

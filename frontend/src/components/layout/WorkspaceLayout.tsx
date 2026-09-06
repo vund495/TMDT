@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Amphora, LogOut, Search } from "lucide-react";
 import { cn } from "../../utils/ui";
 import { useAuthStore } from "../../store/authStore";
 
@@ -35,8 +36,8 @@ export default function WorkspaceLayout({
         )}
       >
         <Link to="/" className="flex items-center gap-2 px-1">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 text-lg">
-            🏺
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+            <Amphora className="h-5 w-5" aria-hidden />
           </span>
           <div>
             <p className="text-[10px] uppercase tracking-wider opacity-70">{eyebrow}</p>
@@ -76,7 +77,7 @@ export default function WorkspaceLayout({
             to="/"
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/80 hover:bg-white/10"
           >
-            🔍 Xem sàn như khách
+            <Search className="h-4 w-4" aria-hidden /> Xem sàn như khách
           </Link>
           <button
             onClick={() => {
@@ -85,7 +86,7 @@ export default function WorkspaceLayout({
             }}
             className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-white/80 hover:bg-white/10"
           >
-            ↪ {logoutLabel}
+            <LogOut className="h-4 w-4" aria-hidden /> {logoutLabel}
           </button>
         </div>
       </aside>
@@ -98,8 +99,8 @@ export default function WorkspaceLayout({
             accent
           )}
         >
-          <Link to="/" className="font-extrabold">
-            🏺 {title}
+          <Link to="/" className="flex items-center gap-1.5 font-extrabold">
+            <Amphora className="h-5 w-5" aria-hidden /> {title}
           </Link>
           <span className="text-sm">
             {profile?.full_name?.split(" ").pop()}
