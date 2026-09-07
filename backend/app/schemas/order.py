@@ -43,6 +43,7 @@ class OrderRead(ORMModel):
     receiver_phone: str
     shipping_address: str
     anti_shock_packed: bool
+    replacement_of_id: uuid.UUID | None = None
     created_at: datetime
 
 
@@ -62,4 +63,5 @@ class ShipmentRead(ORMModel):
     carrier: str | None = None
     tracking_code: str | None = None
     status: str
+    failed_delivery_count: int
     is_returned: bool

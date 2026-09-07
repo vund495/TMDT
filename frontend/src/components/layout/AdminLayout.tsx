@@ -19,6 +19,7 @@ export default function AdminLayout() {
             { label: "Khiếu nại", to: "/admin/khieu-nai" },
             { label: "Đặt tour", to: "/admin/tour" },
             { label: "Đối soát doanh thu", to: "/admin/doi-soat" },
+            { label: "Lịch sử giao dịch", to: "/admin/giao-dich" },
             { label: "Liên hệ & góp ý", to: "/admin/lien-he" },
           ],
         },

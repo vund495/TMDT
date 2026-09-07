@@ -16,6 +16,7 @@ class PaymentRead(ORMModel):
     amount: int
     status: str
     transaction_ref: str | None = None
+    gateway_response: str | None = None
     paid_at: datetime | None = None
     created_at: datetime
 

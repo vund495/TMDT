@@ -1,6 +1,9 @@
-from datetime import date
+from datetime import date, datetime
+from uuid import UUID
 
 from pydantic import BaseModel
+
+from app.schemas.common import ORMModel
 
 
 class VoucherValidateOut(BaseModel):
@@ -41,3 +44,15 @@ class VoucherRead(BaseModel):
     usage_limit: int | None = None
     used_count: int
     active: bool
+
+
+class RevenueRecordRead(ORMModel):
+    id: UUID
+    period: str
+    workshop_id: UUID | None = None
+    gross_amount: int
+    commission_amount: int
+    payout_amount: int
+    payout_status: str = "pending"
+    payout_date: datetime | None = None
+    generated_at: datetime

@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums.order_status import OrderStatus, can_transition
 from app.models.dispute import Dispute
-from app.models.order import Order
+from app.models.order import Order, OrderItem
+from app.services.order_service import generate_order_code
+
+REPLACEMENT_SHIPPING_FEE = 0
+REPLACEMENT_DISCOUNT = 0
 
 
 class DisputeError(Exception):
@@ -76,7 +80,67 @@ async def resolve_dispute(
                 if can_transition(order_status, OrderStatus.returned):
                     order.status = OrderStatus.returned.value
             else:
-                # UC-A2: gửi sản phẩm thay thế -> đưa về giai đoạn chuẩn bị
-                order.status = OrderStatus.preparing.value
+                # UC-31: gửi sản phẩm thay thế -> tạo đơn thay thế mới,
+                # đơn thay thế trỏ về đơn gốc (replacement_of_id) và đơn gốc đóng lại.
+                if order.replacement_of_id is None:
+                    replacement = await _create_replacement_order(session, order)
+                    await _notify_replacement(session, order, replacement)
+                if can_transition(OrderStatus(order.status), OrderStatus.completed):
+                    order.status = OrderStatus.completed.value
     await session.flush()
     return dispute
+
+
+async def _create_replacement_order(session: AsyncSession, order: Order) -> Order:
+    """UC-31: tạo đơn thay thế (miễn phí, cùng sản phẩm, tracking mới).
+
+    replacement_of_id được gán trên đơn thay thế, trỏ về đơn gốc bị lỗi
+    (đúng ngữ nghĩa: "đơn này là thay thế cho đơn X").
+    """
+    replacement = Order(
+        code=generate_order_code().replace("TT-", "RC-"),
+        customer_id=order.customer_id,
+        workshop_id=order.workshop_id,
+        status=OrderStatus.preparing.value,
+        subtotal=0,
+        discount_amount=0,
+        shipping_fee=0,
+        total=0,
+        receiver_name=order.receiver_name,
+        receiver_phone=order.receiver_phone,
+        shipping_address=order.shipping_address,
+        anti_shock_packed=order.anti_shock_packed,
+        replacement_of_id=order.id,
+    )
+    session.add(replacement)
+    await session.flush()
+
+    items = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order.id)
+    )
+    for item in items.scalars().all():
+        session.add(
+            OrderItem(
+                order_id=replacement.id,
+                product_id=item.product_id,
+                product_name=item.product_name,
+                unit_price=item.unit_price,
+                quantity=item.quantity,
+            )
+        )
+    return replacement
+
+
+async def _notify_replacement(session: AsyncSession, order: Order, replacement: Order) -> None:
+    from app.api.v1.notifications import create_notification
+
+    create_notification(
+        session,
+        order.customer_id,
+        f"Xưởng gửi hàng thay thế cho {order.code}",
+        f"Khiếu nại đơn {order.code} đã được chấp thuận theo hướng gửi sản phẩm thay thế. "
+        f"Đơn thay thế {replacement.code} đang được chuẩn bị và sẽ giao miễn phí tới bạn.",
+        "order",
+        replacement.id,
+        "order",
+    )

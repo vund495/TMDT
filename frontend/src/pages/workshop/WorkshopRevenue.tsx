@@ -63,7 +63,7 @@ export default function WorkshopRevenue() {
               </thead>
               <tbody>
                 {data.map((r) => (
-                  <tr key={r.period} className="border-t border-gray-100">
+                  <tr key={r.id} className="border-t border-gray-100">
                     <td className="px-4 py-3">{r.period}</td>
                     <td className="px-4 py-3 text-right"><Money value={r.gross_amount} /></td>
                     <td className="px-4 py-3 text-right"><Money value={r.commission_amount} /></td>

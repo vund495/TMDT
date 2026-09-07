@@ -24,6 +24,9 @@ class Order(Base):
     receiver_phone: Mapped[str] = mapped_column(String(32))
     shipping_address: Mapped[str] = mapped_column(String(500))
     anti_shock_packed: Mapped[bool] = mapped_column(Boolean, default=False)
+    replacement_of_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("orders.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

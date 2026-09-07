@@ -1,24 +1,41 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, RefreshCw, XCircle } from "lucide-react";
-import { Money, Spinner } from "../../components/ui";
-import { getStats, reconcileRevenue } from "../../lib/api";
+import { Money, Spinner, StatusBadge, toastError } from "../../components/ui";
+import { getStats, listRevenueRecords, markPayoutPaid, reconcileRevenue } from "../../lib/api";
 
 export default function AdminReconcile() {
+  const qc = useQueryClient();
   const stats = useQuery({ queryKey: ["admin-stats"], queryFn: getStats });
   const [result, setResult] = useState<Awaited<ReturnType<typeof reconcileRevenue>> | null>(null);
 
+  const records = useQuery({
+    queryKey: ["reconcile-records"],
+    queryFn: () => listRevenueRecords(),
+  });
+
   const run = useMutation({
     mutationFn: reconcileRevenue,
-    onSuccess: (r) => setResult(r),
+    onSuccess: (r) => {
+      setResult(r);
+      qc.invalidateQueries({ queryKey: ["reconcile-records"] });
+    },
+  });
+
+  const markPaid = useMutation({
+    mutationFn: markPayoutPaid,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reconcile-records"] });
+    },
+    onError: (e) => toastError((e as Error).message),
   });
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-5xl">
       <h1 className="text-2xl font-bold text-gray-900">Đối soát doanh thu</h1>
       <p className="mt-1 text-sm text-gray-600">
         Kiểm tra tính nhất quán giữa doanh thu đã ghi nhận (revenue_records) và tổng đơn hàng hoàn tất
-        trên toàn sàn.
+        trên toàn sàn, sau đó chuyển tiền về cho xưởng theo từng kỳ.
       </p>
 
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
@@ -70,6 +87,63 @@ export default function AdminReconcile() {
                 <dd className="font-semibold">{result.revenue_records_count}</dd>
               </div>
             </dl>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <h2 className="text-sm font-semibold text-gray-900">Các kỳ chờ chuyển tiền</h2>
+        {records.isLoading ? (
+          <Spinner />
+        ) : !records.data || records.data.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-500">
+            Chưa có dòng đối soát nào. Chạy nút "Đối soát doanh thu" để tạo dữ liệu.
+          </p>
+        ) : (
+          <div className="mt-3 overflow-x-auto rounded-xl border border-gray-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-left text-gray-500">
+                <tr>
+                  <th className="px-4 py-3">Kỳ</th>
+                  <th className="px-4 py-3 text-right">Doanh thu</th>
+                  <th className="px-4 py-3 text-right">Hoa hồng</th>
+                  <th className="px-4 py-3 text-right">Tiền chuyển cho xưởng</th>
+                  <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.data.map((r) => (
+                  <tr key={r.id} className="border-t border-gray-100">
+                    <td className="px-4 py-3 font-medium">{r.period}</td>
+                    <td className="px-4 py-3 text-right"><Money value={r.gross_amount} /></td>
+                    <td className="px-4 py-3 text-right text-red-600">-<Money value={r.commission_amount} /></td>
+                    <td className="px-4 py-3 text-right font-semibold text-green-700"><Money value={r.payout_amount} /></td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={r.payout_status} />
+                      {r.payout_date && (
+                        <span className="ml-2 text-xs text-gray-400">
+                          {new Date(r.payout_date).toLocaleDateString("vi-VN")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {r.payout_status === "pending" ? (
+                        <button
+                          onClick={() => markPaid.mutate(r.id)}
+                          disabled={markPaid.isPending}
+                          className="rounded-md bg-green-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+                        >
+                          Đã chuyển tiền
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">Đã hoàn tất</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

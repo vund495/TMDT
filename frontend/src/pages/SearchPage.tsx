@@ -20,8 +20,9 @@ const SORTS = [
 //   Pill là ngoại lệ rounded-full duy nhất theo Shape Lock.
 // - Sắp xếp giữ <select> native: đây là form control chuẩn (a11y, autofill, mobile picker),
 //   không thay bằng dropdown custom chỉ vì "đẹp".
-// - Khoảng giá dùng 2 ô số + nút Áp dụng (API đã hỗ trợ min_price/max_price nhưng UI chưa
-//   từng expose): đơn giản hơn slider custom, ít state hơn, dễ kiểm chứng.
+// - Khoảng giá dùng 2 thanh trượt native (Từ/Dến) + nhãn giá trị: dễ dùng hơn 2 ô nhập số,
+//   không cần thư viện slider bên thứ ba (input range chuẩn, a11y tốt). API đã hỗ trợ
+//   min_price/max_price nên chỉ cần bind trực tiếp vào state `price`.
 // - Loading dùng Skeleton đúng hình tile cuối (§4.5) thay vì spinner tròn generic.
 // - Phân trang giữ nút số (tổng trang hữu hạn, thân thiện back-button) thay vì infinite
 //   scroll (cần virtualizer, phá nút Quay lại).
@@ -32,21 +33,25 @@ export default function SearchPage() {
   const theme = sp.get("theme") ?? "";
   const workshopId = sp.get("workshop_id") ?? "";
   const [page, setPage] = useState(1);
-  const [minDraft, setMinDraft] = useState("");
-  const [maxDraft, setMaxDraft] = useState("");
   const [price, setPrice] = useState<{ min?: number; max?: number }>({});
+  const [material, setMaterial] = useState("");
+  const [technique, setTechnique] = useState("");
+  const [glaze, setGlaze] = useState("");
 
   useEffect(() => {
     setPage(1);
-  }, [q, theme, workshopId]);
+  }, [q, theme, workshopId, material, technique, glaze]);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["products", "search", q, theme, workshopId, sort, page, price.min, price.max],
+    queryKey: ["products", "search", q, theme, workshopId, sort, page, price.min, price.max, material, technique, glaze],
     queryFn: () =>
       listProducts({
         q: q || undefined,
         theme: theme || undefined,
         workshop_id: workshopId || undefined,
+        material: material || undefined,
+        firing_technique: technique || undefined,
+        glaze: glaze || undefined,
         sort: sort as never,
         page,
         page_size: 9,
@@ -55,10 +60,21 @@ export default function SearchPage() {
       }),
   });
 
+  // Giới hạn trên của thanh trượt giá; tối thiểu 2 triệu để có không gian kéo.
+  const priceCeiling = useMemo(() => {
+    const maxSeen = data?.items.reduce((m, p) => Math.max(m, p.sale_price ?? p.original_price), 0) ?? 0;
+    return Math.max(2_000_000, Math.ceil((maxSeen * 1.2) / 100_000) * 100_000);
+  }, [data]);
+
   const totalPages = Math.max(1, data?.total_pages ?? 1);
   const goTo = (p: number) => {
     setPage(p);
     window.scrollTo({ top: 0 });
+  };
+
+  const setPriceRange = (next: { min?: number; max?: number }) => {
+    setPrice(next);
+    setPage(1);
   };
 
   const themes = useMemo(() => {
@@ -66,21 +82,27 @@ export default function SearchPage() {
     return Array.from(new Set(all));
   }, [data]);
 
-  const applyPrice = () => {
-    const min = minDraft ? Number(minDraft) : undefined;
-    const max = maxDraft ? Number(maxDraft) : undefined;
-    setPrice({
-      min: min != null && Number.isFinite(min) ? min : undefined,
-      max: max != null && Number.isFinite(max) ? max : undefined,
-    });
-    goTo(1);
-  };
+  const materials = useMemo(() => {
+    const all = data?.items.map((p) => p.material).filter(Boolean) as string[];
+    return Array.from(new Set(all));
+  }, [data]);
+
+  const techniques = useMemo(() => {
+    const all = data?.items.map((p) => p.firing_technique).filter(Boolean) as string[];
+    return Array.from(new Set(all));
+  }, [data]);
+
+  const glazes = useMemo(() => {
+    const all = data?.items.map((p) => p.glaze).filter(Boolean) as string[];
+    return Array.from(new Set(all));
+  }, [data]);
 
   const clearFilters = () => {
     setSort("newest");
-    setMinDraft("");
-    setMaxDraft("");
     setPrice({});
+    setMaterial("");
+    setTechnique("");
+    setGlaze("");
     goTo(1);
   };
 
@@ -108,31 +130,102 @@ export default function SearchPage() {
             ))}
           </select>
         </label>
-        <div className="flex items-center gap-2 text-sm text-ink-soft">
+        {materials.length > 1 && (
+          <label className="flex items-center gap-2 text-sm text-ink-soft">
+            Chất liệu
+            <select
+              value={material}
+              onChange={(e) => {
+                setMaterial(e.target.value);
+                goTo(1);
+              }}
+              className="rounded-md border border-cream-200 bg-white px-3 py-1.5 text-sm text-ink focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
+            >
+              <option value="">Tất cả</option>
+              {materials.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {techniques.length > 1 && (
+          <label className="flex items-center gap-2 text-sm text-ink-soft">
+            Kỹ thuật nung
+            <select
+              value={technique}
+              onChange={(e) => {
+                setTechnique(e.target.value);
+                goTo(1);
+              }}
+              className="rounded-md border border-cream-200 bg-white px-3 py-1.5 text-sm text-ink focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
+            >
+              <option value="">Tất cả</option>
+              {techniques.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {glazes.length > 1 && (
+          <label className="flex items-center gap-2 text-sm text-ink-soft">
+            Men
+            <select
+              value={glaze}
+              onChange={(e) => {
+                setGlaze(e.target.value);
+                goTo(1);
+              }}
+              className="rounded-md border border-cream-200 bg-white px-3 py-1.5 text-sm text-ink focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
+            >
+              <option value="">Tất cả</option>
+              {glazes.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <div className="flex items-center gap-3 text-sm text-ink-soft">
           <span>Giá</span>
           <input
-            value={minDraft}
-            onChange={(e) => setMinDraft(e.target.value)}
-            inputMode="numeric"
-            placeholder="Từ"
-            aria-label="Giá thấp nhất"
-            className="w-28 rounded-md border border-cream-200 bg-white px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
+            type="range"
+            min={0}
+            max={priceCeiling}
+            step={priceCeiling / 100}
+            value={price.min ?? 0}
+            onChange={(e) => {
+              const min = Number(e.target.value);
+              const max = price.max ?? priceCeiling;
+              if (min > max) return;
+              setPriceRange({ min: min === 0 ? undefined : min, max });
+            }}
+            aria-label="Khoảng giá thấp nhất"
+            className="w-28 accent-dat-700"
           />
-          <span aria-hidden>-</span>
           <input
-            value={maxDraft}
-            onChange={(e) => setMaxDraft(e.target.value)}
-            inputMode="numeric"
-            placeholder="Đến"
-            aria-label="Giá cao nhất"
-            className="w-28 rounded-md border border-cream-200 bg-white px-3 py-1.5 text-sm text-ink placeholder:text-ink-faint focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
+            type="range"
+            min={0}
+            max={priceCeiling}
+            step={priceCeiling / 100}
+            value={price.max ?? priceCeiling}
+            onChange={(e) => {
+              const max = Number(e.target.value);
+              const min = price.min ?? 0;
+              if (max < min) return;
+              setPriceRange({ min: min === 0 ? undefined : min, max: max === priceCeiling ? undefined : max });
+            }}
+            aria-label="Khoảng giá cao nhất"
+            className="w-28 accent-dat-700"
           />
-          <button
-            onClick={applyPrice}
-            className="rounded-md border border-cream-200 bg-white px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:bg-cream-50 active:translate-y-px"
-          >
-            Áp dụng
-          </button>
+          <span className="whitespace-nowrap tabular-nums text-xs text-ink-faint">
+            {(price.min ?? 0).toLocaleString("vi-VN")}đ –{" "}
+            {(price.max ?? priceCeiling).toLocaleString("vi-VN")}đ
+          </span>
         </div>
         {data && data.total > 9 && (
           <p className="text-xs text-ink-faint">

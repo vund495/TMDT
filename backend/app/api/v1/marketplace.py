@@ -29,6 +29,9 @@ def _active_product_filter():
 async def list_products(
     q: str | None = None,
     theme: str | None = None,
+    material: str | None = None,
+    firing_technique: str | None = None,
+    glaze: str | None = None,
     workshop_id: uuid.UUID | None = None,
     min_price: int | None = None,
     max_price: int | None = None,
@@ -37,7 +40,7 @@ async def list_products(
     page_size: int = Query(20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
 ):
-    """UC-05/06: tìm kiếm, lọc theo chủ đề/giá, sắp xếp, phân trang sản phẩm."""
+    """UC-05/06: tìm kiếm, lọc theo chủ đề/chất liệu/kiểu nung/men/giá, sắp xếp."""
     conditions = [_active_product_filter()]
 
     if q:
@@ -46,6 +49,12 @@ async def list_products(
         )
     if theme:
         conditions.append(Product.theme == theme)
+    if material:
+        conditions.append(Product.material == material)
+    if firing_technique:
+        conditions.append(Product.firing_technique == firing_technique)
+    if glaze:
+        conditions.append(Product.glaze == glaze)
     if workshop_id:
         conditions.append(Product.workshop_id == workshop_id)
     if min_price is not None:

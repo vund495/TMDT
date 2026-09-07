@@ -15,6 +15,11 @@ dist/
 .env.local
 *.log
 
+# PgAdmin local config (chứa credential, không đưa lên repo)
+pgadmin_pgpass
+pgadmin_servers.json
+pgadmin_data/
+
 # Ghi chu tien do noi bo
 TIEN-DO.md
 

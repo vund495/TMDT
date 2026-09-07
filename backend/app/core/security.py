@@ -68,3 +68,21 @@ async def get_current_user(
         "email": payload.get("email"),
         "role": payload.get("role") or app_meta.get("role", "customer"),
     }
+
+
+async def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict | None:
+    """Cho phép endpoint công khai nhưng vẫn nhận diện người dùng nếu có token."""
+    if credentials is None:
+        return None
+    try:
+        payload = decode_token(credentials.credentials)
+    except HTTPException:
+        return None
+    app_meta = payload.get("app_metadata") or {}
+    return {
+        "id": payload.get("sub"),
+        "email": payload.get("email"),
+        "role": payload.get("role") or app_meta.get("role", "customer"),
+    }

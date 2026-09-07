@@ -316,6 +316,29 @@ where o.code = 'OD-GL-03'
       select 1 from payments p where p.ref_type = 'refund' and p.ref_id = o.id
   );
 
+-- ---------- 14b. PAYMENTS VNPAY (cong thanh toan) ----------
+insert into payments (id, ref_type, ref_id, tour_booking_id, provider, amount, status,
+                      transaction_ref, paid_at, created_at)
+select gen_random_uuid(), 'order', o.id, NULL, 'vnpay', o.total, 'paid',
+       'VNP-' || upper(left(replace(o.id::text, '-', ''), 10)), o.created_at, o.created_at
+from orders o
+where o.code = 'OD-HS-01'
+  and not exists (
+      select 1 from payments p where p.ref_type = 'order' and p.ref_id = o.id
+        and p.provider = 'vnpay'
+  );
+
+insert into payments (id, ref_type, ref_id, tour_booking_id, provider, amount, status,
+                      transaction_ref, paid_at, created_at)
+select gen_random_uuid(), 'tour', NULL, tb.id, 'vnpay', tb.total_amount, 'paid',
+       'VNP-TUR-' || upper(left(replace(tb.id::text, '-', ''), 10)), tb.created_at, tb.created_at
+from tour_bookings tb
+where tb.status in ('confirmed', 'attended')
+  and not exists (
+      select 1 from payments p where p.ref_type = 'tour' and p.tour_booking_id = tb.id
+        and p.provider = 'vnpay'
+  );
+
 -- ---------- 15. DISPUTES (khieu nai don hang) ----------
 insert into disputes (id, order_id, customer_id, reason, evidence_urls, status,
                       resolution, admin_note, resolved_at, created_at)

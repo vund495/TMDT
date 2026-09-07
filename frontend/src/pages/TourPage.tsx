@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, QrCode, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { CalendarDays, QrCode, Sparkles, Users } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { EmptyState, Money, Spinner } from "../components/ui";
-import { bookTour, createVnpayPayment, listSlots } from "../lib/api";
+import { bookTour, createVnpayPayment, listProducts, listSlots } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { toastError } from "../components/ui";
 import type { TourBookingCreateOut } from "../types";
@@ -20,6 +20,11 @@ export default function TourPage() {
   const slots = useQuery({
     queryKey: ["slots"],
     queryFn: () => listSlots(),
+  });
+
+  const suggestions = useQuery({
+    queryKey: ["products", "cross-sell"],
+    queryFn: () => listProducts({ page_size: 4, sort: "newest" }),
   });
 
   const book = useMutation({
@@ -107,6 +112,47 @@ export default function TourPage() {
           </div>
         )}
       </div>
+
+      {suggestions.isSuccess && suggestions.data && suggestions.data.items.length > 0 && (
+        <section className="mt-10 rounded-xl border border-ceramic-100 bg-white p-5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-brand-lam" aria-hidden />
+            <h2 className="font-semibold text-ceramic-900">
+              Gợi ý sản phẩm lưu niệm ("Vỡ 1 đền 1")
+            </h2>
+          </div>
+          <p className="mt-1 text-sm text-gray-600">
+            Tổng hợp quà tặng làng nghề cho chuyến tham quan của bạn — dùng voucher 10% sau tour.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {suggestions.data.items.map((p) => (
+              <Link
+                key={p.id}
+                to={`/san-pham/${p.id}`}
+                className="group overflow-hidden rounded-lg border border-cream-200 bg-white transition-shadow hover:shadow-md"
+              >
+                <div className="flex aspect-square items-center justify-center overflow-hidden bg-cream-100">
+                  {p.images?.[0] ? (
+                    <img
+                      src={p.images[0]}
+                      alt={p.name}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <Users className="h-8 w-8 text-ink-faint" aria-hidden />
+                  )}
+                </div>
+                <div className="p-3">
+                  <p className="line-clamp-2 text-sm font-medium text-ceramic-900">{p.name}</p>
+                  <p className="mt-1 text-sm font-semibold text-brand-lam">
+                    <Money value={p.sale_price ?? p.original_price} />
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {bookingResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

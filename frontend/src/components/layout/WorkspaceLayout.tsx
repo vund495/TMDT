@@ -1,7 +1,8 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Amphora, LogOut, Search } from "lucide-react";
 import { cn } from "../../utils/ui";
 import { useAuthStore } from "../../store/authStore";
+import PageTransition from "../motion/PageTransition";
 
 export interface NavGroup {
   title: string;
@@ -26,6 +27,7 @@ export default function WorkspaceLayout({
   const logout = useAuthStore((s) => s.logout);
   const profile = useAuthStore((s) => s.profile);
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="flex min-h-screen">
@@ -107,7 +109,9 @@ export default function WorkspaceLayout({
           </span>
         </div>
         <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6">
-          <Outlet />
+          <PageTransition key={location.pathname}>
+            <Outlet />
+          </PageTransition>
         </main>
       </div>
     </div>

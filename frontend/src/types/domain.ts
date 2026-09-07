@@ -51,6 +51,9 @@ export interface Workshop {
   lat?: number | null;
   lng?: number | null;
   logo_url?: string | null;
+  bank_name?: string | null;
+  bank_account_no?: string | null;
+  bank_account_name?: string | null;
   status: WorkshopStatus;
   rating_avg?: number;
   reject_reason?: string | null;
@@ -116,7 +119,8 @@ export type OrderStatus =
   | "shipping"
   | "completed"
   | "disputing"
-  | "returned";
+  | "returned"
+  | "return_received";
 
 export interface Order {
   id: string;
@@ -132,6 +136,7 @@ export interface Order {
   receiver_phone: string;
   shipping_address: string;
   anti_shock_packed: boolean;
+  replacement_of_id?: string | null;
   created_at: string;
 }
 
@@ -155,6 +160,7 @@ export interface Shipment {
   carrier?: string | null;
   tracking_code?: string | null;
   status: string;
+  failed_delivery_count: number;
   is_returned: boolean;
 }
 
@@ -191,6 +197,10 @@ export interface TourBooking {
   status: TourBookingStatus;
   voucher_issued: boolean;
   created_at: string;
+  tour_date?: string | null;
+  start_time?: string | null;
+  workshop_name?: string | null;
+  workshop_address?: string | null;
 }
 
 export interface TourBookingCreateOut {
@@ -253,18 +263,22 @@ export interface Comment {
 
 // ---------------- Doanh thu ----------------
 export interface RevenuePeriod {
+  id: string;
   period: string;
   workshop_id?: string | null;
   gross_amount: number;
   commission_amount: number;
   payout_amount: number;
+  payout_status?: string;
 }
 
 export interface WalletPeriod {
+  id: string;
   period: string;
   gross_amount: number;
   commission_amount: number;
   payout_amount: number;
+  payout_status: string;
   paid_orders: number;
 }
 
@@ -274,6 +288,21 @@ export interface WorkshopWallet {
   total_payout: number;
   total_paid_orders: number;
   periods: WalletPeriod[];
+}
+
+// ---------------- Thanh toán / giao dịch ----------------
+export interface Payment {
+  id: string;
+  ref_type: string;
+  ref_id?: string | null;
+  tour_booking_id?: string | null;
+  provider: string;
+  amount: number;
+  status: string;
+  transaction_ref?: string | null;
+  gateway_response?: string | null;
+  paid_at?: string | null;
+  created_at: string;
 }
 
 // ---------------- Thông báo (toast) ----------------

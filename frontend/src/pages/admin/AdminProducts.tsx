@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package } from "lucide-react";
+import { Package, Play } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../../components/ui";
 import { approveProduct, listPendingProducts, rejectProduct } from "../../lib/api";
 import type { Product } from "../../types";
+
+function extractYouTubeId(url?: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
 
 export default function AdminProducts() {
   const qc = useQueryClient();
@@ -16,6 +22,7 @@ export default function AdminProducts() {
 
   const [rejecting, setRejecting] = useState<Product | null>(null);
   const [reason, setReason] = useState("");
+  const [previewVideo, setPreviewVideo] = useState<string | null>(null);
 
   const approve = useMutation({
     mutationFn: approveProduct,
@@ -60,6 +67,15 @@ export default function AdminProducts() {
                     <span className="ml-3 text-gray-400">Kho: {p.stock}</span>
                   </div>
                   {p.description && <p className="mt-1 line-clamp-2 text-sm text-gray-600">{p.description}</p>}
+                  {p.video_url && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewVideo(p.video_url ?? null)}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-brand-lam/10 px-3 py-1 text-xs font-semibold text-brand-lam hover:bg-brand-lam/20"
+                    >
+                      <Play className="h-3.5 w-3.5" aria-hidden /> Xem video nghệ nhân
+                    </button>
+                  )}
                 </div>
                 <div className="flex shrink-0 gap-2 self-center">
                   <button
@@ -101,6 +117,35 @@ export default function AdminProducts() {
           </>
         )}
       </div>
+
+      {previewVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" onClick={() => setPreviewVideo(null)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-2xl overflow-hidden rounded-xl bg-white"
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 p-4">
+              <h2 className="font-semibold text-gray-900">Xem video nghệ nhân</h2>
+              <button onClick={() => setPreviewVideo(null)} className="text-sm text-gray-500 hover:text-gray-900">
+                Đóng
+              </button>
+            </div>
+            <div className="aspect-video bg-black">
+              {extractYouTubeId(previewVideo) ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYouTubeId(previewVideo)}`}
+                  title="Video nghệ nhân"
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video src={previewVideo} controls className="h-full w-full" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {rejecting && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={() => setRejecting(null)}>

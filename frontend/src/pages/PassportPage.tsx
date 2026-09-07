@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { QrCode, Lock, Play } from "lucide-react";
+import { Camera, Lock, Play, QrCode } from "lucide-react";
 import { Spinner, StatusBadge } from "../components/ui";
 import { getPassport } from "../lib/api";
 
@@ -9,6 +9,8 @@ export default function PassportPage() {
   const [sp, setSp] = useSearchParams();
   const [code, setCode] = useState(sp.get("code") ?? "");
   const active = sp.get("code") ?? "";
+  const [scanning, setScanning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["passport", active],
@@ -19,6 +21,55 @@ export default function PassportPage() {
   const lookup = (e: React.FormEvent) => {
     e.preventDefault();
     if (code) setSp({ code: code.trim() });
+  };
+
+  // UC-07: quét QR bằng camera trình duyệt (BarcodeDetector). Giữ nhập tay làm fallback.
+  const stopCamera = useCallback(() => {
+    setScanning(false);
+    const stream = videoRef.current?.srcObject as MediaStream | null;
+    stream?.getTracks().forEach((t) => t.stop());
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  useEffect(() => {
+    return stopCamera;
+  }, [stopCamera]);
+
+  const startScan = async () => {
+    if (!("BarcodeDetector" in window)) {
+      alert("Trình duyệt này chưa hỗ trợ quét QR tự động. Vui lòng nhập mã bằng tay.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setScanning(true);
+      // @ts-expect-error BarcodeDetector có trong Chromium-based browser
+      const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+      const tick = async () => {
+        if (!scanning || !videoRef.current) return;
+        try {
+          const codes = await detector.detect(videoRef.current);
+          if (codes.length > 0 && codes[0].rawValue) {
+            stopCamera();
+            setCode(codes[0].rawValue);
+            setSp({ code: codes[0].rawValue.trim() });
+            return;
+          }
+        } catch {
+          /* frame chưa sẵn sàng, bỏ qua */
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    } catch {
+      alert("Không truy cập được camera. Vui lòng cho phép camera hoặc nhập mã bằng tay.");
+    }
   };
 
   return (
@@ -41,12 +92,28 @@ export default function PassportPage() {
         <button className="rounded-md bg-dat-700 px-5 py-2 text-sm font-semibold text-white hover:bg-dat-800">
           Tra cứu
         </button>
+        <button
+          type="button"
+          onClick={scanning ? stopCamera : startScan}
+          className="flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <Camera className="h-4 w-4" aria-hidden /> {scanning ? "Dừng quét" : "Quét QR"}
+        </button>
       </form>
+
+      {scanning && (
+        <div className="mt-4 overflow-hidden rounded-xl border border-dat-300">
+          <video ref={videoRef} className="aspect-square w-full object-cover" playsInline muted />
+          <p className="bg-gray-900 p-2 text-center text-xs text-white">
+            Đưa mã QR vào khung hình để quét tự động...
+          </p>
+        </div>
+      )}
 
       <div className="mt-6">
         {!active ? (
           <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
-            Nhập mã QR để bắt đầu tra cứu.
+            Nhập mã QR hoặc quét camera để bắt đầu tra cứu.
           </p>
         ) : isLoading ? (
           <Spinner />
@@ -100,7 +167,8 @@ export default function PassportPage() {
                     <Lock className="h-4 w-4" /> Hộ chiếu đang khóa
                   </div>
                   <p className="mt-1 text-amber-700/80">
-                    Mua sản phẩm và xác nhận nhận hàng để mở khóa video & câu chuyện nghệ nhân.
+                    Video nghệ nhân chỉ mở sau khi bạn mua sản phẩm và đăng nhập bằng tài khoản
+                    đã đặt hàng. Admin và xưởng gốm sở hữu sản phẩm luôn xem được.
                   </p>
                 </div>
               )}

@@ -18,5 +18,6 @@ class Payment(Base):
     amount: Mapped[int] = mapped_column(BigInteger)
     status: Mapped[str] = mapped_column(String(32), default="pending")
     transaction_ref: Mapped[str | None] = mapped_column(String(255))
+    gateway_response: Mapped[str | None] = mapped_column(String(500))
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

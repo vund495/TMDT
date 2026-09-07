@@ -13,6 +13,9 @@ export function createWorkshop(body: {
   lat?: number;
   lng?: number;
   logo_url?: string;
+  bank_name?: string;
+  bank_account_no?: string;
+  bank_account_name?: string;
 }): Promise<Workshop> {
   return apiFetch<Workshop>("/api/v1/workshop", { method: "POST", body: JSON.stringify(body) });
 }
@@ -24,6 +27,9 @@ export function updateWorkshop(body: {
   lat?: number;
   lng?: number;
   logo_url?: string;
+  bank_name?: string;
+  bank_account_no?: string;
+  bank_account_name?: string;
 }): Promise<Workshop> {
   return apiFetch<Workshop>("/api/v1/workshop", { method: "PATCH", body: JSON.stringify(body) });
 }
@@ -91,6 +97,14 @@ export function listWorkshopOrders(status?: string): Promise<Order[]> {
 
 export function shipOrder(orderId: string): Promise<Order> {
   return apiFetch<Order>(`/api/v1/workshop/orders/${orderId}/ship`, { method: "POST" });
+}
+
+export function markOrderPacking(orderId: string): Promise<Order> {
+  return apiFetch<Order>(`/api/v1/workshop/orders/${orderId}/mark-packing`, { method: "POST" });
+}
+
+export function receiveReturnOrder(orderId: string): Promise<Order> {
+  return apiFetch<Order>(`/api/v1/workshop/orders/${orderId}/receive-return`, { method: "POST" });
 }
 
 export function getWorkshopRevenue(): Promise<RevenuePeriod[]> {

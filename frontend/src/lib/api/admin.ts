@@ -1,8 +1,12 @@
 import { apiFetch } from "./client";
-import type { AdminUser, Dispute, Page, Product, Workshop } from "../../types";
+import type { AdminUser, Dispute, Page, Payment, Product, Workshop } from "../../types";
 
 export function listPendingWorkshops(): Promise<Workshop[]> {
   return apiFetch<Workshop[]>("/api/v1/admin/workshops/pending");
+}
+
+export function listAllWorkshops(): Promise<Workshop[]> {
+  return apiFetch<Workshop[]>("/api/v1/admin/workshops");
 }
 
 export function approveWorkshop(id: string): Promise<Workshop> {
@@ -67,12 +71,28 @@ export function resolveDispute(id: string, body: { resolution: string; admin_not
   });
 }
 
+export interface RevenueByWorkshop {
+  workshop_name: string;
+  gross_amount: number;
+}
+
+export interface RevenueByPeriod {
+  period: string;
+  gross_amount: number;
+}
+
 export interface PlatformStats {
   total_revenue: number;
+  total_commission: number;
+  total_payout: number;
+  total_refunded: number;
+  gross_profit: number;
   orders_count: number;
   workshops_count: number;
   customers_count: number;
   disputes_pending: number;
+  revenue_by_workshop: RevenueByWorkshop[];
+  revenue_by_period: RevenueByPeriod[];
 }
 
 export function getStats(): Promise<PlatformStats> {
@@ -88,6 +108,30 @@ export interface ReconcileResult {
 
 export function reconcileRevenue(): Promise<ReconcileResult> {
   return apiFetch<ReconcileResult>("/api/v1/admin/reconcile-revenue", { method: "POST" });
+}
+
+export interface RevenueRecordItem {
+  id: string;
+  period: string;
+  workshop_id?: string | null;
+  gross_amount: number;
+  commission_amount: number;
+  payout_amount: number;
+  payout_status: string;
+  payout_date?: string | null;
+  generated_at?: string;
+}
+
+export function listRevenueRecords(params: { period?: string; payout_status?: string } = {}): Promise<RevenueRecordItem[]> {
+  const sp = new URLSearchParams();
+  if (params.period) sp.set("period", params.period);
+  if (params.payout_status) sp.set("payout_status", params.payout_status);
+  const qs = sp.toString();
+  return apiFetch<RevenueRecordItem[]>(`/api/v1/admin/reconcile/records${qs ? `?${qs}` : ""}`);
+}
+
+export function markPayoutPaid(id: string): Promise<RevenueRecordItem> {
+  return apiFetch<RevenueRecordItem>(`/api/v1/admin/reconcile/${id}/mark-paid`, { method: "POST" });
 }
 
 export interface ContactMessage {
@@ -118,4 +162,14 @@ export interface AdminTourBooking {
 
 export function listAdminTourBookings(): Promise<AdminTourBooking[]> {
   return apiFetch<AdminTourBooking[]>("/api/v1/admin/tours/bookings");
+}
+
+export function listAdminPayments(params: { provider?: string; status?: string; page?: number; page_size?: number } = {}): Promise<Page<Payment>> {
+  const sp = new URLSearchParams();
+  if (params.provider) sp.set("provider", params.provider);
+  if (params.status) sp.set("status", params.status);
+  if (params.page) sp.set("page", String(params.page));
+  if (params.page_size) sp.set("page_size", String(params.page_size));
+  const qs = sp.toString();
+  return apiFetch<Page<Payment>>(`/api/v1/admin/payments${qs ? `?${qs}` : ""}`);
 }

@@ -7,11 +7,13 @@ from app.core.database import get_session
 from app.core.dependencies import require_admin
 from app.models.dispute import Dispute
 from app.models.order import Order
+from app.models.payment import Payment
 from app.models.product import Product
 from app.models.user import User
 from app.models.workshop import Workshop
 from app.schemas.common import Page
 from app.schemas.dispute import DisputeRead
+from app.schemas.payment import PaymentRead
 from app.schemas.product import ProductRead, ProductRejectIn
 from app.schemas.user import AdminUserRead, SetUserActiveIn, UserRead
 from app.schemas.workshop import WorkshopRead
@@ -35,6 +37,22 @@ async def pending_workshops(
     """UC-33: danh sách xưởng chờ duyệt."""
     result = await session.execute(
         select(Workshop).where(Workshop.status == "pending").order_by(Workshop.created_at)
+    )
+    return result.scalars().all()
+
+
+@router.get("/workshops", response_model=list[WorkshopRead])
+async def list_all_workshops(
+    status: str | None = None,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """UC-33: toàn bộ đối tác kèm trạng thái (approved/pending/rejected)."""
+    conditions = []
+    if status:
+        conditions.append(Workshop.status == status)
+    result = await session.execute(
+        select(Workshop).where(*conditions).order_by(Workshop.created_at.asc())
     )
     return result.scalars().all()
 
@@ -325,6 +343,46 @@ async def list_disputes(
     return result.scalars().all()
 
 
+# ── Transactions ────────────────────────────────────────────────────────
+
+
+@router.get("/payments", response_model=Page[PaymentRead])
+async def list_payments(
+    provider: str | None = None,
+    status: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """Lịch sử giao dịch: lọc theo kênh (vietqr/vnpay) và trạng thái, phân trang."""
+    conditions = []
+    if provider:
+        conditions.append(Payment.provider == provider)
+    if status:
+        conditions.append(Payment.status == status)
+
+    total = (
+        await session.execute(select(func.count()).select_from(Payment).where(*conditions))
+    ).scalar_one()
+
+    result = await session.execute(
+        select(Payment)
+        .where(*conditions)
+        .order_by(Payment.created_at.desc(), Payment.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    items = result.scalars().all()
+    return Page(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
+
+
 # ── Stats ───────────────────────────────────────────────────────────────
 
 
@@ -366,11 +424,26 @@ async def platform_stats(
     admin=Depends(require_admin),
     session: AsyncSession = Depends(get_session),
 ):
-    """UC-38: thống kê doanh thu toàn sàn."""
+    """UC-38: thống kê doanh thu, lợi nhuận gộp, doanh thu theo xưởng/kỳ."""
     from app.models.voucher import RevenueRecord
 
     total_revenue = (
         await session.execute(select(func.coalesce(func.sum(RevenueRecord.gross_amount), 0)))
+    ).scalar_one()
+    total_commission = (
+        await session.execute(select(func.coalesce(func.sum(RevenueRecord.commission_amount), 0)))
+    ).scalar_one()
+    total_payout = (
+        await session.execute(select(func.coalesce(func.sum(RevenueRecord.payout_amount), 0)))
+    ).scalar_one()
+    # Lợi nhuận gộp sàn = phí sàn - đã hoàn tiền
+    total_refunded = (
+        await session.execute(
+            select(func.coalesce(func.sum(Payment.amount), 0)).where(
+                Payment.ref_type == "refund",
+                Payment.status == "refunded",
+            )
+        )
     ).scalar_one()
     orders_count = (
         await session.execute(select(func.count()).select_from(Order))
@@ -386,12 +459,41 @@ async def platform_stats(
         select(func.count()).select_from(Dispute).where(Dispute.status.in_(["open", "reviewing"]))
     )
     disputes_pending = disputes_result.scalar_one()
+
+    # Doanh thu theo xưởng + theo kỳ cho biểu đồ dashboard
+    workshop_rows = await session.execute(
+        select(Workshop.name, func.coalesce(func.sum(RevenueRecord.gross_amount), 0))
+        .select_from(RevenueRecord)
+        .join(Workshop, RevenueRecord.workshop_id == Workshop.id)
+        .group_by(Workshop.name)
+        .order_by(func.sum(RevenueRecord.gross_amount).desc())
+    )
+    revenue_by_workshop = [
+        {"workshop_name": name, "gross_amount": int(gross or 0)}
+        for name, gross in workshop_rows.all()
+    ]
+    period_rows = await session.execute(
+        select(RevenueRecord.period, func.coalesce(func.sum(RevenueRecord.gross_amount), 0))
+        .group_by(RevenueRecord.period)
+        .order_by(RevenueRecord.period.asc())
+    )
+    revenue_by_period = [
+        {"period": period, "gross_amount": int(gross or 0)}
+        for period, gross in period_rows.all()
+    ]
+
     return {
         "total_revenue": int(total_revenue or 0),
+        "total_commission": int(total_commission or 0),
+        "total_payout": int(total_payout or 0),
+        "total_refunded": int(total_refunded or 0),
+        "gross_profit": int((total_commission or 0) - (total_refunded or 0)),
         "orders_count": orders_count,
         "workshops_count": workshops_count,
         "customers_count": customers_count,
         "disputes_pending": disputes_pending,
+        "revenue_by_workshop": revenue_by_workshop,
+        "revenue_by_period": revenue_by_period,
     }
 
 
@@ -405,3 +507,56 @@ async def reconcile_revenue(
     
     result = await reconcile_revenue(session)
     return result
+
+
+@router.get("/reconcile/records")
+async def list_revenue_records(
+    period: str | None = None,
+    payout_status: str | None = None,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """Danh sách dòng revenue_records (đối soát) để quản lý chuyển tiền về xưởng."""
+    from app.schemas.voucher import RevenueRecordRead
+    from app.models.voucher import RevenueRecord
+
+    conditions = []
+    if period:
+        conditions.append(RevenueRecord.period == period)
+    if payout_status:
+        conditions.append(RevenueRecord.payout_status == payout_status)
+
+    result = await session.execute(
+        select(RevenueRecord)
+        .where(*conditions)
+        .order_by(RevenueRecord.period.desc(), RevenueRecord.generated_at)
+    )
+    return [RevenueRecordRead.model_validate(r) for r in result.scalars().all()]
+
+
+@router.post("/reconcile/{record_id}/mark-paid")
+async def mark_payout_paid(
+    record_id: str,
+    admin=Depends(require_admin),
+    session: AsyncSession = Depends(get_session),
+):
+    """Đánh dấu payout của một kỳ đối soát đã được chuyển tiền về xưởng."""
+    from datetime import datetime, timezone
+
+    from app.models.voucher import RevenueRecord
+    from app.schemas.voucher import RevenueRecordRead
+
+    try:
+        rid = uuid.UUID(record_id)
+    except ValueError:
+        raise HTTPException(400, "record_id không hợp lệ")
+
+    record = await session.get(RevenueRecord, rid)
+    if record is None:
+        raise HTTPException(404, "Không tìm thấy bản ghi đối soát")
+
+    record.payout_status = "paid"
+    record.payout_date = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(record)
+    return RevenueRecordRead.model_validate(record)

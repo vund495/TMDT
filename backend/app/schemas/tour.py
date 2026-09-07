@@ -38,6 +38,10 @@ class TourBookingRead(ORMModel):
     status: str
     voucher_issued: bool
     created_at: datetime
+    tour_date: date | None = None
+    start_time: time | None = None
+    workshop_name: str | None = None
+    workshop_address: str | None = None
 
 
 class TourBookingCreateOut(BaseModel):

@@ -249,7 +249,7 @@ async def _on_paid(session: AsyncSession, payment: Payment) -> None:
                 order.id,
                 "order",
             )
-        await _unlock_passports(session, payment.ref_id)
+        await _unlock_passports(session, order)
     elif payment.ref_type == "tour" and payment.tour_booking_id:
         booking = await session.get(TourBooking, payment.tour_booking_id)
         if booking and booking.status == "pending_payment":
@@ -265,15 +265,31 @@ async def _on_paid(session: AsyncSession, payment: Payment) -> None:
             )
 
 
-async def _unlock_passports(session: AsyncSession, order_id: uuid.UUID) -> None:
+async def _unlock_passports(session: AsyncSession, order: Order) -> None:
+    """UC-08: mở khóa video nghệ nhân cho riêng khách đã mua (per-user)."""
+    from app.models.product_passport import ProductPassport, ProductPassportView
+
     result = await session.execute(
         select(ProductPassport)
         .join(OrderItem, OrderItem.product_id == ProductPassport.product_id)
-        .where(OrderItem.order_id == order_id)
+        .where(OrderItem.order_id == order.id)
     )
     for pp in result.scalars().all():
         pp.unlocked = True
-        pp.unlocked_by_order_id = order_id
+        pp.unlocked_by_order_id = order.id
+        exists = await session.execute(
+            select(ProductPassportView).where(
+                ProductPassportView.passport_id == pp.id,
+                ProductPassportView.user_id == order.customer_id,
+            )
+        )
+        if exists.scalar_one_or_none() is None:
+            session.add(
+                ProductPassportView(
+                    passport_id=pp.id,
+                    user_id=order.customer_id,
+                )
+            )
 
 
 async def _record_revenue(session: AsyncSession, order: Order, amount: int) -> None:
@@ -290,7 +306,11 @@ async def _record_revenue(session: AsyncSession, order: Order, amount: int) -> N
 
 
 async def refund_order(session: AsyncSession, order: Order) -> Payment:
-    """UC-30: hoàn tiền 100%. Chỉ cho đơn ở trạng thái returned, idempotent."""
+    """UC-30: hoàn tiền 100%. Chỉ cho đơn ở trạng thái returned, idempotent.
+
+    Nếu đơn từng thanh toán qua VNPay thì gọi refund API thật của VNPay
+    (sandbox). Trường hợp còn lại (VietQR/thủ công) vẫn ghi nội bộ và note.
+    """
     if order.status != OrderStatus.returned.value:
         raise ValueError("Chỉ hoàn tiền cho đơn ở trạng thái đã hoàn trả (returned)")
 
@@ -306,17 +326,94 @@ async def refund_order(session: AsyncSession, order: Order) -> Payment:
     if existing is not None:
         return existing
 
+    gateway_note = None
+    original_result = await session.execute(
+        select(Payment).where(
+            Payment.ref_type == "order",
+            Payment.ref_id == order.id,
+            Payment.status == "paid",
+        )
+    )
+    original_payment = original_result.scalars().first()
+
+    # Thử gọi VNPay refund API khi đơn được thanh toán qua VNPay
+    if original_payment is not None and original_payment.provider == "vnpay":
+        gateway_note = await _call_vnpay_refund(session, order, original_payment)
+
     refund = Payment(
         ref_type="refund",
         ref_id=order.id,
-        provider="manual",
+        provider="vnpay" if (original_payment and original_payment.provider == "vnpay") else "manual",
         amount=order.total,
         status="refunded",
         paid_at=_now(),
+        gateway_response=gateway_note,
     )
     session.add(refund)
+    await _restock_order(session, order)
     await session.flush()
     return refund
+
+
+async def _call_vnpay_refund(
+    session: AsyncSession, order: Order, original: Payment
+) -> str | None:
+    """Gọi API refund VNPay. Trả về ghi chú lưu vào payments.gateway_response."""
+    import json
+    from datetime import datetime
+
+    import httpx
+
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    if not (settings.vnpay_tmn_code and settings.vnpay_hash_secret):
+        return "VNPay chưa cấu hình - giữ nội bộ"
+    if not original.transaction_ref or not original.paid_at:
+        return "Thiếu giao dịch gốc (transaction_ref/paid_at) - giữ nội bộ"
+
+    create_date = _now().strftime("%Y%m%d%H%M%S")
+    transaction_date = original.paid_at.strftime("%Y%m%d%H%M%S")
+    params = {
+        "vnp_RequestId": str(uuid.uuid4()).replace("-", "")[:32],
+        "vnp_Version": "2.1.0",
+        "vnp_Command": "refund",
+        "vnp_TmnCode": settings.vnpay_tmn_code,
+        "vnp_TxnRef": original.transaction_ref or original.id.hex,
+        "vnp_Amount": str(int(original.amount) * 100),
+        "vnp_OrderInfo": f"Hoan tien don {order.code}",
+        "vnp_TransactionNo": original.transaction_ref,
+        "vnp_TransactionDate": transaction_date,
+        "vnp_CreateBy": "admin",
+        "vnp_CreateDate": create_date,
+        "vnp_IpAddr": "127.0.0.1",
+    }
+    params["vnp_SecureHash"] = vnp_secure_hash(params)
+    try:
+        resp = await httpx.AsyncClient(timeout=15).post(
+            settings.vnpay_refund_url, json=params
+        )
+        data = resp.json()
+    except Exception as e:  # pragma: no cover - mạng lỗi
+        return f"Lỗi gọi VNPay refund API: {type(e).__name__}"
+    code = data.get("vnp_ResponseCode", "99")
+    message = data.get("vnp_Message", "")
+    if code != "00":
+        return f"VNPay refund fail ({code}): {message}"
+    return f"VNPay refund OK ({code}): {message}"
+
+
+async def _restock_order(session: AsyncSession, order: Order) -> None:
+    """Trả lại tồn kho cho các sản phẩm của đơn hoàn hàng."""
+    from app.models.product import Product
+
+    items_result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order.id)
+    )
+    for item in items_result.scalars().all():
+        product = await session.get(Product, item.product_id)
+        if product is not None:
+            product.stock = (product.stock or 0) + item.quantity
 
 
 async def refund_tour(
@@ -408,31 +505,3 @@ async def reconcile_revenue(session: AsyncSession) -> dict:
         "revenue_records_count": revenue_count,
         "consistent": abs(total_revenue - total_orders_revenue) < 1000,  # cho phép sai số nhỏ
     }
-    order_result = await session.execute(
-        select(Order).where(Order.code == code)
-    )
-    order = order_result.scalar_one_or_none()
-    if order is not None:
-        pay_result = await session.execute(
-            select(Payment).where(Payment.ref_type == "order", Payment.ref_id == order.id)
-        )
-        payment = pay_result.scalars().first()
-        if payment is not None:
-            return payment
-    # UC-23/24: tour booking — QR dùng 8 ký tự đầu của booking id (in hoa)
-    booking_result = await session.execute(
-        select(TourBooking)
-    )
-    tour_code = code.upper()
-    if tour_code.startswith("TT-"):
-        tour_code = tour_code[3:]
-    for booking in booking_result.scalars().all():
-        if booking.id.hex[:8].upper() == tour_code:
-            pay_result = await session.execute(
-                select(Payment).where(
-                    Payment.ref_type == "tour",
-                    Payment.tour_booking_id == booking.id,
-                )
-            )
-            return pay_result.scalars().first()
-    return None

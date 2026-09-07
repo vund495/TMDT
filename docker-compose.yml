@@ -2,9 +2,9 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: "projectTMDT123@@"
-      POSTGRES_DB: tmdt
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tmdt}
     ports:
       - "5433:5432"
     volumes:
@@ -22,7 +22,7 @@ services:
     env_file: ./backend/.env
     environment:
       # Trong container kết nối qua service name "db" (port nội bộ 5432)
-      DATABASE_URL: postgresql+asyncpg://postgres:projectTMDT123%40%40@db:5432/tmdt
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD_URL}@db:5432/${POSTGRES_DB:-tmdt}
     depends_on:
       db:
         condition: service_healthy
@@ -40,12 +40,14 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: "Admin123!"
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5051:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin_servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin_pgpass:/pgpass:ro
     depends_on:
       db:
         condition: service_healthy

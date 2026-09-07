@@ -28,6 +28,37 @@ def _get_uid(current_user: dict) -> uuid.UUID:
     return uuid.UUID(str(current_user["id"]))
 
 
+async def _enrich_bookings(
+    session: AsyncSession, bookings: list[TourBooking]
+) -> list[TourBookingRead]:
+    """Đính thêm tên xưởng + ngày/giờ suất tour vào từng vé đã đặt."""
+    if not bookings:
+        return []
+    slot_ids = {b.slot_id for b in bookings}
+    slots_result = await session.execute(
+        select(TourSlot).where(TourSlot.id.in_(slot_ids))
+    )
+    slots = {s.id: s for s in slots_result.scalars().all()}
+    workshop_ids = {s.workshop_id for s in slots.values()}
+    ws_result = await session.execute(
+        select(Workshop).where(Workshop.id.in_(workshop_ids))
+    )
+    workshops = {w.id: w for w in ws_result.scalars().all()}
+    out = []
+    for b in bookings:
+        slot = slots.get(b.slot_id)
+        ws = workshops.get(slot.workshop_id) if slot else None
+        data = TourBookingRead.model_validate(b).model_dump()
+        if slot is not None:
+            data["tour_date"] = slot.tour_date
+            data["start_time"] = slot.start_time
+        if ws is not None:
+            data["workshop_name"] = ws.name
+            data["workshop_address"] = ws.address
+        out.append(TourBookingRead.model_validate(data))
+    return out
+
+
 @router.get("/slots", response_model=list[TourSlotRead])
 async def list_slots(
     workshop_id: uuid.UUID | None = None,
@@ -105,7 +136,7 @@ async def my_bookings(
     result = await session.execute(
         select(TourBooking).where(TourBooking.customer_id == uid).order_by(TourBooking.created_at.desc())
     )
-    return result.scalars().all()
+    return await _enrich_bookings(session, list(result.scalars().all()))
 
 
 @router.get("/workshops/{workshop_id}/bookings", response_model=list[TourBookingRead])
@@ -130,7 +161,7 @@ async def workshop_bookings(
     result = await session.execute(
         select(TourBooking).where(TourBooking.slot_id.in_(slot_ids))
     )
-    return result.scalars().all()
+    return await _enrich_bookings(session, list(result.scalars().all()))
 
 
 @router.post("/bookings/{booking_id}/cancel", response_model=TourBookingRead)

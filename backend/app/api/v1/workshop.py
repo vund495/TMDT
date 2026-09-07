@@ -55,6 +55,9 @@ async def create_workshop(
         lat=body.lat,
         lng=body.lng,
         logo_url=body.logo_url,
+        bank_name=body.bank_name,
+        bank_account_no=body.bank_account_no,
+        bank_account_name=body.bank_account_name,
         status="pending",
     )
     session.add(workshop)
@@ -281,6 +284,65 @@ async def workshop_ship_order(
     return order
 
 
+@router.post("/orders/{order_id}/mark-packing", response_model=OrderRead)
+async def workshop_mark_packing(
+    order_id: uuid.UUID,
+    workshop: Workshop = Depends(get_owned_workshop),
+    session: AsyncSession = Depends(get_session),
+):
+    """UC-13/16: xưởng xác nhận ĐANG ĐÓNG GÓI (chống sốc) cho đơn đã thanh toán."""
+    from app.enums.order_status import OrderStatus, can_transition
+
+    order = await session.get(Order, order_id)
+    if order is None or order.workshop_id != workshop.id:
+        raise HTTPException(404, "Không tìm thấy đơn hàng")
+    current = OrderStatus(order.status)
+    if current not in (OrderStatus.pending_payment, OrderStatus.preparing):
+        raise HTTPException(400, "Đơn phải ở trạng thái chờ thanh toán hoặc chuẩn bị")
+    # UC-13: pending_payment -> preparing (xưởng bắt đầu xử lý đơn)
+    if current == OrderStatus.pending_payment:
+        order.status = OrderStatus.preparing.value
+    # UC-16: xác nhận đóng gói chống sốc
+    order.anti_shock_packed = True
+    await session.commit()
+    await session.refresh(order)
+    return order
+
+
+@router.post("/orders/{order_id}/receive-return", response_model=OrderRead)
+async def workshop_receive_return(
+    order_id: uuid.UUID,
+    workshop: Workshop = Depends(get_owned_workshop),
+    session: AsyncSession = Depends(get_session),
+):
+    """UC-20: xưởng tiếp nhận kiện hàng hoàn về sau khi bị boom hàng / trả hàng."""
+    from app.enums.order_status import OrderStatus, can_transition
+
+    order = await session.get(Order, order_id)
+    if order is None or order.workshop_id != workshop.id:
+        raise HTTPException(404, "Không tìm thấy đơn hàng")
+    current = OrderStatus(order.status)
+    if not can_transition(current, OrderStatus.return_received):
+        raise HTTPException(400, "Đơn không ở trạng thái hoàn hàng cần tiếp nhận")
+    if current != OrderStatus.returned:
+        raise HTTPException(400, "Chỉ tiếp nhận kiện hoàn khi đơn đang ở trạng thái hoàn hàng")
+    order.status = OrderStatus.return_received.value
+    from app.api.v1.notifications import create_notification
+
+    create_notification(
+        session,
+        order.customer_id,
+        f"Đơn hàng {order.code} đã được xưởng nhận lại",
+        f"Xưởng gốm đã tiếp nhận kiện hàng hoàn về của đơn {order.code}.",
+        "order",
+        order.id,
+        "order",
+    )
+    await session.commit()
+    await session.refresh(order)
+    return order
+
+
 # ── Revenue ─────────────────────────────────────────────────────────────
 
 
@@ -356,10 +418,12 @@ async def workshop_wallet(
         total_paid += paid
         periods.append(
             WorkshopWalletPeriod(
+                id=r.id,
                 period=r.period,
                 gross_amount=gross,
                 commission_amount=commission,
                 payout_amount=payout,
+                payout_status=r.payout_status or "pending",
                 paid_orders=paid,
             )
         )

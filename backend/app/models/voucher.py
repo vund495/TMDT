@@ -32,4 +32,6 @@ class RevenueRecord(Base):
     gross_amount: Mapped[int] = mapped_column(default=0)
     commission_amount: Mapped[int] = mapped_column(default=0)
     payout_amount: Mapped[int] = mapped_column(default=0)
+    payout_status: Mapped[str] = mapped_column(String(16), default="pending")
+    payout_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

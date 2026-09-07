@@ -81,7 +81,7 @@ export default function AdminDisputes() {
             <p className="text-sm text-gray-600">{resolving.reason}</p>
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">Kết quả xử lý</label>
-              <select
+                          <select
                 value={resolution}
                 onChange={(e) => setResolution(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -95,6 +95,18 @@ export default function AdminDisputes() {
                   </option>
                 ))}
               </select>
+              {resolution === "reship" && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Hệ thống sẽ tự tạo một đơn thay thế (mã RC-...) với tổng tiền 0₫, xưởng
+                  đóng gói chống sốc và giao lại miễn phí cho khách.
+                </p>
+              )}
+              {resolution === "approved" && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Sẽ thực hiện hoàn tiền cho khách theo phương thức thanh toán gốc (VNPay hoặc
+                  thủ công) và hoàn lại tồn kho cho xưởng.
+                </p>
+              )}
             </div>
             <input
               value={note}

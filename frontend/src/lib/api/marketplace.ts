@@ -4,6 +4,9 @@ import type { Comment, Page, Product, ProductDetail, Review, Workshop } from "..
 export interface ProductQuery {
   q?: string;
   theme?: string;
+  material?: string;
+  firing_technique?: string;
+  glaze?: string;
   workshop_id?: string;
   min_price?: number;
   max_price?: number;

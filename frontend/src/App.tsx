@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
-import { Suspense, lazy } from "react";
 import CustomerLayout from "./components/layout/CustomerLayout";
 import WorkshopLayout from "./components/layout/WorkshopLayout";
 import AdminLayout from "./components/layout/AdminLayout";
@@ -32,23 +31,24 @@ import PolicyPage from "./pages/PolicyPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import VnpayResult from "./pages/VnpayResult";
 
-const WorkshopDashboard = lazy(() => import("./pages/workshop/WorkshopDashboard"));
-const WorkshopProfile = lazy(() => import("./pages/workshop/WorkshopProfile"));
-const WorkshopProducts = lazy(() => import("./pages/workshop/WorkshopProducts"));
-const WorkshopOrders = lazy(() => import("./pages/workshop/WorkshopOrders"));
-const WorkshopTours = lazy(() => import("./pages/workshop/WorkshopTours"));
-const WorkshopRevenue = lazy(() => import("./pages/workshop/WorkshopRevenue"));
-const WorkshopWallet = lazy(() => import("./pages/workshop/WorkshopWallet"));
+import WorkshopDashboard from "./pages/workshop/WorkshopDashboard";
+import WorkshopProfile from "./pages/workshop/WorkshopProfile";
+import WorkshopProducts from "./pages/workshop/WorkshopProducts";
+import WorkshopOrders from "./pages/workshop/WorkshopOrders";
+import WorkshopTours from "./pages/workshop/WorkshopTours";
+import WorkshopRevenue from "./pages/workshop/WorkshopRevenue";
+import WorkshopWallet from "./pages/workshop/WorkshopWallet";
 
-const AdminHome = lazy(() => import("./pages/admin/AdminHome"));
-const AdminWorkshops = lazy(() => import("./pages/admin/AdminWorkshops"));
-const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
-const AdminDisputes = lazy(() => import("./pages/admin/AdminDisputes"));
-const AdminTours = lazy(() => import("./pages/admin/AdminTours"));
-const AdminVouchers = lazy(() => import("./pages/admin/AdminVouchers"));
-const AdminReconcile = lazy(() => import("./pages/admin/AdminReconcile"));
-const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
+import AdminHome from "./pages/admin/AdminHome";
+import AdminWorkshops from "./pages/admin/AdminWorkshops";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminDisputes from "./pages/admin/AdminDisputes";
+import AdminTours from "./pages/admin/AdminTours";
+import AdminVouchers from "./pages/admin/AdminVouchers";
+import AdminReconcile from "./pages/admin/AdminReconcile";
+import AdminFeedback from "./pages/admin/AdminFeedback";
+import AdminPayments from "./pages/admin/AdminPayments";
 
 function WorkshopGuard() {
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -112,7 +112,7 @@ export default function App() {
 
         {/* Khu chủ xưởng */}
         <Route element={<WorkshopGuard />}>
-          <Route element={<Suspense fallback={<GuardLoading />}><WorkshopLayout /></Suspense>}>
+          <Route element={<WorkshopLayout />}>
             <Route path="/xuong" element={<WorkshopDashboard />} />
             <Route path="/xuong/hs" element={<WorkshopProfile />} />
             <Route path="/xuong/san-pham" element={<WorkshopProducts />} />
@@ -125,7 +125,7 @@ export default function App() {
 
         {/* Khu quản trị */}
         <Route element={<AdminGuard />}>
-          <Route element={<Suspense fallback={<GuardLoading />}><AdminLayout /></Suspense>}>
+          <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminHome />} />
             <Route path="/admin/xuong" element={<AdminWorkshops />} />
             <Route path="/admin/nguoi-dung" element={<AdminUsers />} />
@@ -134,6 +134,7 @@ export default function App() {
             <Route path="/admin/tour" element={<AdminTours />} />
             <Route path="/admin/uu-dai" element={<AdminVouchers />} />
             <Route path="/admin/doi-soat" element={<AdminReconcile />} />
+            <Route path="/admin/giao-dich" element={<AdminPayments />} />
             <Route path="/admin/lien-he" element={<AdminFeedback />} />
           </Route>
         </Route>

@@ -1,7 +1,7 @@
 from app.models.user import User
 from app.models.workshop import Workshop
 from app.models.product import Product
-from app.models.product_passport import ProductPassport
+from app.models.product_passport import ProductPassport, ProductPassportView
 from app.models.cart_item import CartItem
 from app.models.order import Order, OrderItem, Shipment
 from app.models.review import Review, Comment

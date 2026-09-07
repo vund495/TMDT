@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Award, ScanLine, Truck } from "lucide-react";
+import { Award, RotateCcw, ScanLine, Truck } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../components/ui";
 import { confirmReceipt, cancelOrder, getOrder, getShipmentOfOrder } from "../lib/api";
 
@@ -107,7 +107,33 @@ export default function OrderDetail() {
             )}
           </div>
         )}
+        {shipmentData?.is_returned && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            Kiện hàng đã bị trả về sau {shipmentData.failed_delivery_count} lần giao thất bại
+            (kiện hoàn sẽ được xưởng tiếp nhận).
+          </div>
+        )}
+        {!!shipmentData && shipmentData.failed_delivery_count > 0 && !shipmentData.is_returned && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-dat-200 bg-dat-50 px-3 py-2 text-sm text-dat-700">
+            Giao thất bại lần thứ {shipmentData.failed_delivery_count}; đơn vị vận chuyển sẽ
+            giao lại.
+          </div>
+        )}
       </section>
+
+      {o.replacement_of_id && (
+        <section className="mt-4 rounded-xl border border-men-200 bg-men-50 p-4 text-sm text-men-700">
+          <div className="flex items-center gap-2 font-semibold">
+            <RotateCcw className="h-4 w-4" aria-hidden /> Đơn thay thế
+          </div>
+          <p className="mt-1">
+            Đơn này là bản gửi lại miễn phí thay cho đơn gốc{" "}
+            <span className="font-mono">{o.replacement_of_id.slice(0, 8)}</span> sau khi khiếu nại
+            được chấp thuận. Theo dõi giao hàng như bình thường.
+          </p>
+        </section>
+      )}
 
       <div className="mt-6 flex flex-wrap gap-3">
         {o.status === "pending_payment" && (

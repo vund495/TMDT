@@ -11,6 +11,7 @@ export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: Tone }> = 
   completed: map("Hoàn thành", "green"),
   disputing: map("Đang tranh chấp", "gray"),
   returned: map("Trả hàng", "red"),
+  return_received: map("Đã nhận kiện hoàn", "slate"),
 };
 
 export const WORKSHOP_STATUS: Record<WorkshopStatus, { label: string; tone: Tone }> = {
@@ -50,6 +51,11 @@ export const RESOLUTION_LABEL: Record<string, string> = {
   approved: "Chấp thuận - hoàn tiền",
   reship: "Chấp thuận - gửi hàng thay thế",
   rejected: "Từ chối",
+};
+
+export const PAYOUT_STATUS: Record<string, { label: string; tone: Tone }> = {
+  pending: map("Chưa chuyển tiền", "amber"),
+  paid: map("Đã chuyển tiền", "green"),
 };
 
 // map tone -> badge class

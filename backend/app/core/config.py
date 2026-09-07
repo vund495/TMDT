@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     vnpay_url: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     vnpay_return_url: str = "http://localhost:8001/api/v1/payments/vnpay/return"
     vnpay_api_url: str = ""
+    vnpay_refund_url: str = "https://sandbox.vnpayment.vn/merchantv2/api/Transaction/refund"
 
     frontend_url: str = "http://localhost:5173"
 

@@ -111,6 +111,7 @@ export default function AdminUsers() {
                   <th className="px-4 py-3">Vai trò</th>
                   <th className="px-4 py-3">Xưởng</th>
                   <th className="px-4 py-3 text-right">Đơn hàng</th>
+                  <th className="px-4 py-3 text-right">Đơn gây lỗi</th>
                   <th className="px-4 py-3 text-right">Đã chi</th>
                   <th className="px-4 py-3">Trạng thái</th>
                   <th className="px-4 py-3 text-right">Hành động</th>
@@ -128,6 +129,15 @@ export default function AdminUsers() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600">{u.workshop_name || "-"}</td>
                     <td className="px-4 py-3 text-right">{u.orders_count ?? 0}</td>
+                    <td className="px-4 py-3 text-right">
+                      {u.bad_order_count ? (
+                        <span className="rounded-md bg-red-50 px-2 py-1 text-xs font-bold text-red-600">
+                          {u.bad_order_count}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300">0</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <Money value={u.total_spent ?? 0} />
                     </td>

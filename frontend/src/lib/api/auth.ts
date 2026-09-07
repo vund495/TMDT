@@ -31,3 +31,13 @@ export function register(body: RegisterInput): Promise<TokenResponse> {
 export function getMe(): Promise<UserProfile> {
   return apiFetch<UserProfile>("/api/v1/auth/me");
 }
+
+export function updateProfile(body: {
+  full_name?: string;
+  phone?: string;
+}): Promise<UserProfile> {
+  return apiFetch<UserProfile>("/api/v1/users/profile", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}

@@ -15,6 +15,9 @@ class WorkshopRead(ORMModel):
     lat: float | None = None
     lng: float | None = None
     logo_url: str | None = None
+    bank_name: str | None = None
+    bank_account_no: str | None = None
+    bank_account_name: str | None = None
     status: str
     rating_avg: float
     created_at: datetime
@@ -27,6 +30,9 @@ class WorkshopCreateIn(BaseModel):
     lat: float | None = None
     lng: float | None = None
     logo_url: str | None = None
+    bank_name: str | None = None
+    bank_account_no: str | None = None
+    bank_account_name: str | None = None
 
 
 class WorkshopUpdateIn(BaseModel):
@@ -36,9 +42,13 @@ class WorkshopUpdateIn(BaseModel):
     lat: float | None = None
     lng: float | None = None
     logo_url: str | None = None
+    bank_name: str | None = None
+    bank_account_no: str | None = None
+    bank_account_name: str | None = None
 
 
 class WorkshopRevenuePeriod(ORMModel):
+    id: uuid.UUID
     period: str
     gross_amount: int
     commission_amount: int
@@ -46,10 +56,12 @@ class WorkshopRevenuePeriod(ORMModel):
 
 
 class WorkshopWalletPeriod(ORMModel):
+    id: uuid.UUID
     period: str
     gross_amount: int
     commission_amount: int
     payout_amount: int
+    payout_status: str = "pending"
     paid_orders: int
 
 
