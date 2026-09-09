@@ -31,12 +31,12 @@ export default function HomePage() {
             Sàn gốm Bát Tràng
           </p>
           <h1 className="mt-3 text-4xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-5xl">
-            Gốm chính gốc,
+            Kết nối trực tiếp
             <br />
-            minh bạch từng chiếc
+            di sản gốm Bát Tràng
           </h1>
           <p className="mt-4 max-w-[52ch] text-base leading-relaxed text-ink-soft">
-            Mỗi sản phẩm mang hộ chiếu QR truy xuất xưởng. Vỡ 1 đền 1, không hỏi thêm.
+            Nền tảng thương mại kết nối thẳng từ mạng lưới xưởng sản xuất đến tay bạn. Lưu giữ câu chuyện văn hóa 700 năm qua hệ thống 'Hộ chiếu QR' minh bạch nguồn gốc và quy trình chế tác cho từng sản phẩm.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -55,7 +55,7 @@ export default function HomePage() {
         </Reveal>
         <Reveal delay={0.1}>
           <img
-            src="/images/hero-pottery.jpg"
+            src="/images/Ảnh bìa trang chủ.PNG"
             alt="Bộ bình gốm men mộc"
             width={1200}
             height={800}
@@ -133,7 +133,7 @@ export default function HomePage() {
         <Reveal>
           <Link to="/tour" className="group block overflow-hidden rounded-lg border border-cream-200 bg-white shadow-card">
             <img
-              src="/images/tour-throwing.jpg"
+              src="/images/Ảnh Tour nặn gốm tại lò.jpg"
               alt="Nghệ nhân chuốt gốm trên bàn xoay"
               width={800}
               height={479}
@@ -141,9 +141,9 @@ export default function HomePage() {
               className="aspect-[8/5] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
             <div className="p-5">
-              <h2 className="text-lg font-extrabold tracking-tight text-ink">Tour nặn gốm tại lò</h2>
+              <h2 className="text-lg font-extrabold tracking-tight text-ink">Trải nghiệm thực tế tại xưởng (O2O)</h2>
               <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                Tự tay chuốt gốm cùng nghệ nhân, nhận voucher mua quà lưu niệm sau tour.
+                Kết nối trực tiếp quy trình sản xuất qua tour 'Một ngày làm nghệ nhân'. Khách hàng tự tay chế tác sản phẩm tại lò nung và tìm hiểu câu chuyện văn hóa bản địa.
               </p>
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-dat-700">
                 Xem lịch tour <ArrowRight className="h-4 w-4" aria-hidden />
@@ -154,7 +154,7 @@ export default function HomePage() {
         <Reveal delay={0.08}>
           <Link to="/ho-chieu" className="group block overflow-hidden rounded-lg border border-cream-200 bg-white shadow-card">
             <img
-              src="/images/passport-tableware.jpg"
+              src="/images/Ảnh minh họa Hộ chiếu QR.jpg"
               alt="Bộ bát đĩa gốm men lam"
               width={800}
               height={533}
@@ -162,9 +162,9 @@ export default function HomePage() {
               className="aspect-[8/5] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
             <div className="p-5">
-              <h2 className="text-lg font-extrabold tracking-tight text-ink">Hộ chiếu QR mỗi sản phẩm</h2>
+              <h2 className="text-lg font-extrabold tracking-tight text-ink">Số hóa dữ liệu với Hộ chiếu QR</h2>
               <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                Quét mã để xem xưởng, mẻ nung và video nghệ nhân mở khóa sau khi mua.
+                Mỗi sản phẩm bán ra kèm theo mã QR truy xuất trực tiếp thông tin xưởng đối tác, tên nghệ nhân, năm thành lập và video ghi lại quá trình hoàn thiện sản phẩm.
               </p>
               <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-dat-700">
                 Tra cứu hộ chiếu <ArrowRight className="h-4 w-4" aria-hidden />
