@@ -49,13 +49,8 @@ services:
       - key: VNPAY_RETURN_URL
         sync: false
 
-  - type: static
-    name: tmdt-frontend
-    region: singapore
-    buildCommand: npm ci && npm run build
-    publishPath: dist
-    envVars:
-      - key: NODE_VERSION
-        value: "20"
-      - key: VITE_API_BASE_URL
-        sync: false
+# Frontend không tạo qua Blueprint (Render chưa hỗ trợ "static" trong Blueprint).
+# Tạo thủ công: Render => New + => Static Site => chọn repo =>
+#   Build Command : npm ci && npm run build
+#   Publish Dir   : dist
+#   Env           : VITE_API_BASE_URL = https://<backend>.onrender.com
