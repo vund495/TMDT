@@ -11,7 +11,7 @@ TMDT/
 │   ├── app/
 │   │   ├── main.py                   # FastAPI app, CORS mount 86 routes
 │   │   ├── core/
-│   │   │   ├── config.py             # Settings (DB, VietQR, VNPay, Casso)
+│   │   │   ├── config.py             # Settings (DB, VietQR, VNPay, SePay)
 │   │   │   ├── database.py           # SQLAlchemy async engine, Base
 │   │   │   ├── security.py           # JWT decode, get_current_user
 │   │   │   └── dependencies.py       # require_admin, require_workshop_owner, get_owned_workshop
@@ -47,7 +47,7 @@ TMDT/
 │   │       ├── workshop.py           # CRUD workshop, products, orders/ship, revenue/wallet
 │   │       ├── orders.py             # POST create, GET list/detail, cancel, confirm-receipt
 │   │       ├── shipping.py           # POST /shipping/webhook (GHTK/J&T mock)
-│   │       ├── payments.py           # VNPay create/return/ipn, refund, Casso webhook
+│   │       ├── payments.py           # VNPay create/return/ipn, refund, SePay webhook
 │   │       ├── tours.py              # Tour slots CRUD, bookings, cancel, attend
 │   │       ├── promotions.py         # Vouchers CRUD, my-vouchers
 │   │       ├── reviews.py            # Reviews + comments per product
@@ -150,7 +150,7 @@ TMDT/
 
 | UC | Tên | BE | FE | DB | Ghi chú |
 |---|---|---|---|---|---|
-| UC-15 | Mua hàng & Thanh toán trực tuyến | ✅ `POST /orders` + `/payments/vnpay` + `/payments/webhook/casso` | ✅ `CartPage`, `CheckoutPage`, `VnpayResult` | ✅ orders, payments | VNPay + VietQR + Casso |
+| UC-15 | Mua hàng & Thanh toán trực tuyến | ✅ `POST /orders` + `/payments/vnpay` + `/payments/webhook/sepay` | ✅ `CartPage`, `CheckoutPage`, `VnpayResult` | ✅ orders, payments | VNPay + VietQR + SePay |
 | UC-16 | Đóng gói chống sốc chuyên dụng đa lớp | ✅ `POST /workshop/orders/{id}/mark-packing` set `anti_shock_packed=True` | ✅ `CheckoutPage.tsx` checkbox + `WorkshopOrders.tsx` nút xác nhận đóng gói | ✅ anti_shock_packed | Đã thêm bước xưởng xác nhận "đang đóng gói chống sốc" |
 | UC-17 | Cập nhật trạng thái giao hàng | ✅ `POST /shipping/webhook` | ✅ `OrderDetail.tsx` xem status | ✅ shipments | Webhook handles: picked_up, delivered, returned, attempt_failed |
 | UC-18 | Xác nhận nhận hàng hoàn tất | ✅ `POST /orders/{id}/confirm-receipt` | ✅ `OrderDetail.tsx` nút "Đã nhận hàng" | ✅ | Hoàn chỉnh |
@@ -262,4 +262,4 @@ TMDT/
 - **VNPay**: sandbox hiện tại cần TMN key thật + Secret key production
 - **VietQR**: tài khoản BIDV 7621982567 / Nguyen Duy Vu (BIN 970418) — tiền thật
 - **Shipping partner**: webhook hiện mock, cần tích hợp GHTK/J&T API thật
-- **Casso**: webhook detection cần API key Casso production
+- **SePay**: webhook detection cần API key webhook SePay production

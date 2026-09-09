@@ -7,16 +7,18 @@ class OrderStatus(str, Enum):
     shipping = "shipping"
     completed = "completed"
     disputing = "disputing"
+    cancelled = "cancelled"
     returned = "returned"
     return_received = "return_received"
 
 
 VALID_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
-    OrderStatus.pending_payment: {OrderStatus.preparing, OrderStatus.returned},
+    OrderStatus.pending_payment: {OrderStatus.preparing, OrderStatus.cancelled},
     OrderStatus.preparing: {OrderStatus.shipping, OrderStatus.disputing},
     OrderStatus.shipping: {OrderStatus.completed, OrderStatus.disputing, OrderStatus.returned},
     OrderStatus.completed: {OrderStatus.disputing},
     OrderStatus.disputing: {OrderStatus.completed, OrderStatus.returned},
+    OrderStatus.cancelled: set(),
     OrderStatus.returned: {OrderStatus.return_received},
     OrderStatus.return_received: set(),
 }

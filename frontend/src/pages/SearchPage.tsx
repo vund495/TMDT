@@ -20,9 +20,9 @@ const SORTS = [
 //   Pill là ngoại lệ rounded-full duy nhất theo Shape Lock.
 // - Sắp xếp giữ <select> native: đây là form control chuẩn (a11y, autofill, mobile picker),
 //   không thay bằng dropdown custom chỉ vì "đẹp".
-// - Khoảng giá dùng 2 thanh trượt native (Từ/Dến) + nhãn giá trị: dễ dùng hơn 2 ô nhập số,
-//   không cần thư viện slider bên thứ ba (input range chuẩn, a11y tốt). API đã hỗ trợ
-//   min_price/max_price nên chỉ cần bind trực tiếp vào state `price`.
+// - Khoảng giá dùng 1 thanh trượt native (giá tối đa) + nhãn giá trị: đơn giản, không cần
+//   thư viện slider bên thứ ba (input range chuẩn, a11y tốt). Kéo thanh chỉ cập nhật `priceDraft`
+//   để xem trước; phải bấm "Áp dụng" mới commit vào state `price` → gọi API (max_price).
 // - Loading dùng Skeleton đúng hình tile cuối (§4.5) thay vì spinner tròn generic.
 // - Phân trang giữ nút số (tổng trang hữu hạn, thân thiện back-button) thay vì infinite
 //   scroll (cần virtualizer, phá nút Quay lại).
@@ -33,7 +33,8 @@ export default function SearchPage() {
   const theme = sp.get("theme") ?? "";
   const workshopId = sp.get("workshop_id") ?? "";
   const [page, setPage] = useState(1);
-  const [price, setPrice] = useState<{ min?: number; max?: number }>({});
+  const [price, setPrice] = useState<{ max?: number }>({});
+  const [priceDraft, setPriceDraft] = useState<number | undefined>();
   const [material, setMaterial] = useState("");
   const [technique, setTechnique] = useState("");
   const [glaze, setGlaze] = useState("");
@@ -43,7 +44,7 @@ export default function SearchPage() {
   }, [q, theme, workshopId, material, technique, glaze]);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["products", "search", q, theme, workshopId, sort, page, price.min, price.max, material, technique, glaze],
+    queryKey: ["products", "search", q, theme, workshopId, sort, page, price.max, material, technique, glaze],
     queryFn: () =>
       listProducts({
         q: q || undefined,
@@ -55,7 +56,6 @@ export default function SearchPage() {
         sort: sort as never,
         page,
         page_size: 9,
-        min_price: price.min,
         max_price: price.max,
       }),
   });
@@ -72,10 +72,13 @@ export default function SearchPage() {
     window.scrollTo({ top: 0 });
   };
 
-  const setPriceRange = (next: { min?: number; max?: number }) => {
+  const setPriceRange = (next: { max?: number }) => {
     setPrice(next);
     setPage(1);
   };
+
+  // Giá trị hiển thị: ưu tiên draft đang kéo, nếu chưa chạm thì dùng filter đã áp dụng.
+  const shownPrice = priceDraft ?? price.max ?? priceCeiling;
 
   const themes = useMemo(() => {
     const all = data?.items.map((p) => p.theme).filter(Boolean) as string[];
@@ -100,6 +103,7 @@ export default function SearchPage() {
   const clearFilters = () => {
     setSort("newest");
     setPrice({});
+    setPriceDraft(undefined);
     setMaterial("");
     setTechnique("");
     setGlaze("");
@@ -197,35 +201,21 @@ export default function SearchPage() {
             min={0}
             max={priceCeiling}
             step={priceCeiling / 100}
-            value={price.min ?? 0}
-            onChange={(e) => {
-              const min = Number(e.target.value);
-              const max = price.max ?? priceCeiling;
-              if (min > max) return;
-              setPriceRange({ min: min === 0 ? undefined : min, max });
-            }}
-            aria-label="Khoảng giá thấp nhất"
-            className="w-28 accent-dat-700"
-          />
-          <input
-            type="range"
-            min={0}
-            max={priceCeiling}
-            step={priceCeiling / 100}
-            value={price.max ?? priceCeiling}
-            onChange={(e) => {
-              const max = Number(e.target.value);
-              const min = price.min ?? 0;
-              if (max < min) return;
-              setPriceRange({ min: min === 0 ? undefined : min, max: max === priceCeiling ? undefined : max });
-            }}
-            aria-label="Khoảng giá cao nhất"
+            value={shownPrice}
+            onChange={(e) => setPriceDraft(Number(e.target.value))}
+            aria-label="Giá tối đa"
             className="w-28 accent-dat-700"
           />
           <span className="whitespace-nowrap tabular-nums text-xs text-ink-faint">
-            {(price.min ?? 0).toLocaleString("vi-VN")}đ –{" "}
-            {(price.max ?? priceCeiling).toLocaleString("vi-VN")}đ
+            {shownPrice.toLocaleString("vi-VN")}đ
           </span>
+          <button
+            onClick={() => setPriceRange({ max: shownPrice >= priceCeiling ? undefined : shownPrice })}
+            disabled={shownPrice === (price.max ?? priceCeiling)}
+            className="rounded-md bg-dat-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-dat-800 disabled:opacity-40"
+          >
+            Áp dụng
+          </button>
         </div>
         {data && data.total > 9 && (
           <p className="text-xs text-ink-faint">

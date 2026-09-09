@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, QrCode, Sparkles, Users } from "lucide-react";
+import { CheckCircle2, CalendarDays, QrCode, Sparkles, Users } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { EmptyState, Money, Spinner } from "../components/ui";
-import { bookTour, createVnpayPayment, listProducts, listSlots } from "../lib/api";
+import { EmptyState, Money, Spinner, toastError } from "../components/ui";
+import { toastOk } from "../lib/toast";
+import { bookTour, createVnpayPayment, getPaymentStatus, listProducts, listSlots } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
-import { toastError } from "../components/ui";
 import type { TourBookingCreateOut } from "../types";
 
 export default function TourPage() {
@@ -16,6 +16,26 @@ export default function TourPage() {
   const [workshopId, setWorkshopId] = useState("");
   const [guests, setGuests] = useState<Record<string, number>>({});
   const [bookingResult, setBookingResult] = useState<TourBookingCreateOut | null>(null);
+  const [tourPaid, setTourPaid] = useState(false);
+
+  useEffect(() => {
+    setTourPaid(false);
+    if (!bookingResult) return;
+    const check = async () => {
+      try {
+        const s = await getPaymentStatus("tour", bookingResult.booking.id);
+        if (s.status === "paid") {
+          setTourPaid(true);
+          toastOk("Đã thanh toán tour trải nghiệm thành công");
+        }
+      } catch {
+        // chưa có payment hoặc lỗi tạm thời — bỏ qua, poll tiếp
+      }
+    };
+    check();
+    const t = setInterval(check, 3000);
+    return () => clearInterval(t);
+  }, [bookingResult]);
 
   const slots = useQuery({
     queryKey: ["slots"],
@@ -157,52 +177,71 @@ export default function TourPage() {
       {bookingResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <div className="flex items-center gap-2">
-              <QrCode className="h-6 w-6 text-brand-lam" />
-              <h2 className="text-lg font-bold text-ceramic-900">Quét mã QR để thanh toán</h2>
-            </div>
-            {bookingResult.qr_url ? (
-              <img
-                src={bookingResult.qr_url}
-                alt="QR thanh toán"
-                className="mx-auto mt-4 max-h-64 rounded-lg border"
-              />
+            {tourPaid ? (
+              <div className="text-center py-2">
+                <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" aria-hidden />
+                <h2 className="mt-3 text-lg font-bold text-ceramic-900">Thanh toán thành công!</h2>
+                <p className="mt-2 text-sm text-gray-600">
+                  Vé tour của bạn đã được xác nhận cho {bookingResult.booking.num_guests} khách.
+                  Hẹn gặp bạn tại xưởng!
+                </p>
+                <button
+                  onClick={() => { setBookingResult(null); navigate("/tour-cua-toi"); }}
+                  className="mt-5 w-full rounded-lg bg-dat-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-dat-800"
+                >
+                  Xem tour của tôi
+                </button>
+              </div>
             ) : (
-              <p className="mt-4 text-sm text-gray-500">Không tạo được mã QR. Vui lòng liên hệ hỗ trợ.</p>
+              <>
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-6 w-6 text-brand-lam" />
+                  <h2 className="text-lg font-bold text-ceramic-900">Quét mã QR để thanh toán</h2>
+                </div>
+                {bookingResult.qr_url ? (
+                  <img
+                    src={bookingResult.qr_url}
+                    alt="QR thanh toán"
+                    className="mx-auto mt-4 max-h-64 rounded-lg border"
+                  />
+                ) : (
+                  <p className="mt-4 text-sm text-gray-500">Không tạo được mã QR. Vui lòng liên hệ hỗ trợ.</p>
+                )}
+                <p className="mt-3 text-center text-sm text-gray-600">
+                  Đơn: <b>{bookingResult.booking.total_amount.toLocaleString("vi-VN")}đ</b> · {bookingResult.booking.num_guests} khách
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (!bookingResult.payment_id) {
+                        toastError("Lỗi", "Không có payment_id để thanh toán VNPay");
+                        return;
+                      }
+                      createVnpayPayment(bookingResult.payment_id)
+                        .then((r) => window.location.assign(r.pay_url))
+                        .catch(() => navigate("/tour-cua-toi"));
+                    }}
+                    className="flex-1 rounded-lg bg-dat-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-dat-800"
+                  >
+                    Thanh toán VNPay
+                  </button>
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => { setBookingResult(null); navigate("/tour-cua-toi"); }}
+                    className="flex-1 rounded-lg bg-ceramic-100 px-4 py-2.5 text-sm font-semibold text-ceramic-900 hover:bg-ceramic-200"
+                  >
+                    Xem tour của tôi
+                  </button>
+                  <button
+                    onClick={() => setBookingResult(null)}
+                    className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </>
             )}
-            <p className="mt-3 text-center text-sm text-gray-600">
-              Đơn: <b>{bookingResult.booking.total_amount.toLocaleString("vi-VN")}đ</b> · {bookingResult.booking.num_guests} khách
-            </p>
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => {
-                  if (!bookingResult.payment_id) {
-                    toastError("Lỗi", "Không có payment_id để thanh toán VNPay");
-                    return;
-                  }
-                  createVnpayPayment(bookingResult.payment_id)
-                    .then((r) => window.location.assign(r.pay_url))
-                    .catch(() => navigate("/tour-cua-toi"));
-                }}
-                className="flex-1 rounded-lg bg-dat-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-dat-800"
-              >
-                Thanh toán VNPay
-              </button>
-            </div>
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={() => { setBookingResult(null); navigate("/tour-cua-toi"); }}
-                className="flex-1 rounded-lg bg-ceramic-100 px-4 py-2.5 text-sm font-semibold text-ceramic-900 hover:bg-ceramic-200"
-              >
-                Xem tour của tôi
-              </button>
-              <button
-                onClick={() => setBookingResult(null)}
-                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Đóng
-              </button>
-            </div>
           </div>
         </div>
       )}

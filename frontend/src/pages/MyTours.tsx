@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, MapPin, Clock, Ticket, Tag } from "lucide-react";
 import { EmptyState, Money, Spinner, StatusBadge, toastError } from "../components/ui";
+import PayQRModal from "../components/PayQRModal";
 import { cancelBooking, listMyBookings } from "../lib/api";
+import { toastOk } from "../lib/toast";
 
 function fmtTime(t?: string | null) {
   if (!t) return "";
@@ -11,12 +14,33 @@ function fmtTime(t?: string | null) {
 
 export default function MyTours() {
   const qc = useQueryClient();
+  const [paying, setPaying] = useState<string | null>(null);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["my-bookings"],
     queryFn: listMyBookings,
+    refetchInterval: 5000,
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["my-bookings"] });
+
+  const prevPending = useRef<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    if (!data) return;
+    const prev = prevPending.current;
+    for (const b of data) {
+      if (b.status !== "pending_payment") {
+        const was = prev.get(b.id);
+        if (was === "pending_payment") {
+          toastOk(`Tour đã thanh toán thành công`);
+        }
+        prev.delete(b.id);
+      } else {
+        prev.set(b.id, b.status);
+      }
+    }
+    prevPending.current = prev;
+  }, [data]);
   const cancel = useMutation({
     mutationFn: cancelBooking,
     onSuccess: invalidate,
@@ -89,7 +113,7 @@ export default function MyTours() {
 
                 {b.status === "pending_payment" && (
                   <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                    Chờ thanh toán - vui lòng quét QR tại trang đặt tour để xác nhận.
+                    Chờ thanh toán - bấm "Thanh toán" để quét QR hoặc thanh toán qua VNPay.
                   </p>
                 )}
                 {b.status === "attended" && (
@@ -113,6 +137,14 @@ export default function MyTours() {
                 )}
 
                 <div className="mt-3 flex gap-2">
+                  {b.status === "pending_payment" && (
+                    <button
+                      onClick={() => setPaying(b.id)}
+                      className="rounded-md bg-dat-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-dat-800"
+                    >
+                      Thanh toán
+                    </button>
+                  )}
                   {(b.status === "confirmed" || b.status === "pending_payment") && (
                     <button
                       onClick={() => cancel.mutate(b.id)}
@@ -128,6 +160,19 @@ export default function MyTours() {
           </div>
         )}
       </div>
+      <PayQRModal
+        open={!!paying}
+        onClose={() => {
+          setPaying(null);
+          invalidate();
+        }}
+        onPaid={() => {
+          invalidate();
+        }}
+        refType="tour"
+        refId={paying ?? ""}
+        label="tour"
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: Tone }> = 
   shipping: map("Đang giao", "blue"),
   completed: map("Hoàn thành", "green"),
   disputing: map("Đang tranh chấp", "gray"),
+  cancelled: map("Đã hủy", "red"),
   returned: map("Trả hàng", "red"),
   return_received: map("Đã nhận kiện hoàn", "slate"),
 };

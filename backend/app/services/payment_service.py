@@ -6,7 +6,7 @@ from datetime import datetime
 from urllib.parse import quote_plus
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -28,7 +28,12 @@ except Exception:  # pragma: no cover
 
 
 def _minh_money_uri(amount: int, code: str) -> str:
-    """VietQR EMVCo payload tĩnh (không dùng API, chỉ cần config ngân hàng)."""
+    """VietQR EMVCo payload tĩnh (không dùng API, chỉ cần config ngân hàng).
+
+    Chỉ áp dụng cho số tài khoản thuần số (như tài khoản thường/ví cái).
+    Nếu số tài khoản là VA chứa chữ cái (vd BIDV VA "96247P8RAY") thì dùng
+    đường QR qua gateway https://vietqr.app/app/img ở qr_url_for_ref().
+    """
     settings = get_settings()
     if not (settings.bank_bin and settings.account_no and settings.account_name):
         return None
@@ -45,10 +50,28 @@ def _minh_money_uri(amount: int, code: str) -> str:
         + "5802VN"
         + _tlv("59", settings.account_name)
         + _tlv("60", "HANOI")
-        + "62" + _len(_tlv("08", "vietqr") + _tlv("01", "QRPUSH") + _tlv("03", code[:8]))
+        + "62" + _len(_tlv("08", "vietqr") + _tlv("01", "QRPUSH") + _tlv("03", code))
         + "6304"
     )
     return payload_detail + _crc16(payload_detail)
+
+
+def _vietqr_gateway_image_url(amount: int, code: str) -> str | None:
+    """URL ảnh QR VietQR qua gateway vietqr.app/app/img.
+
+    Hỗ trợ cả số tài khoản VA chứa chữ cái mà EMVCo tĩnh không nhúng được.
+    Des: nội dung chuyển khoản = mã đơn/tour để SePay đối soát.
+    """
+    settings = get_settings()
+    if not (settings.bank_bin and settings.account_no and settings.account_name):
+        return None
+    from urllib.parse import quote
+
+    return (
+        f"https://qr.sepay.vn/img?acc={quote(settings.account_no)}"
+        f"&bank={settings.bank_bin}&name={quote(settings.account_name)}"
+        f"&amount={amount}&des={quote(code)}"
+    )
 
 
 def _tlv(tag: str, value: str) -> str:
@@ -98,6 +121,10 @@ async def create_order_payment(session: AsyncSession, order: Order) -> Payment:
 
 
 async def qr_url_for_ref(code: str, amount: int) -> str | None:
+    # VA/Số tk có chữ cái -> dùng ảnh QR gateway VietQR (hỗ trợ cả alphanumeric).
+    gateway = _vietqr_gateway_image_url(amount, code)
+    if gateway:
+        return gateway
     payload = _minh_money_uri(amount, code)
     if not payload:
         return None
@@ -419,8 +446,17 @@ async def _restock_order(session: AsyncSession, order: Order) -> None:
 async def refund_tour(
     session: AsyncSession, booking: TourBooking
 ) -> Payment | None:
-    """UC-25: hủy tour -> hoàn tiền vé nếu đã thanh toán (confirmed)."""
-    if booking.status == TourBookingStatus.pending_payment.value:
+    """UC-25: hủy tour -> hoàn tiền vé nếu đã thanh toán (có payment đã thu)."""
+    # Chỉ hoàn nếu khách đã thực sự đóng tiền (payment tour đạt trạng thái paid),
+    # tránh tạo refund "ma" cho vé chưa từng thanh toán.
+    paid_result = await session.execute(
+        select(Payment).where(
+            Payment.ref_type == "tour",
+            Payment.tour_booking_id == booking.id,
+            Payment.status == "paid",
+        )
+    )
+    if paid_result.scalars().first() is None:
         return None
     existing_result = await session.execute(
         select(Payment).where(
@@ -446,8 +482,11 @@ async def refund_tour(
 
 
 async def find_payment_by_ref(session: AsyncSession, code: str) -> Payment | None:
+    # Ngân hàng có thể bỏ dấu '-' trong nội dung (MRB/TTB ...), nên so khớp chuẩn hóa.
+    norm = (code or "").upper().replace("-", "")
+    # 1) Đơn hàng: Order.code dạng "TT-XXXXXXXX". Chuẩn hóa 2 vế trước khi so.
     order_result = await session.execute(
-        select(Order).where(Order.code == code)
+        select(Order).where(func.upper(func.replace(Order.code, "-", "")) == norm)
     )
     order = order_result.scalar_one_or_none()
     if order is not None:
@@ -457,13 +496,12 @@ async def find_payment_by_ref(session: AsyncSession, code: str) -> Payment | Non
         payment = pay_result.scalars().first()
         if payment is not None:
             return payment
-    # UC-23/24: tour booking — QR dùng 8 ký tự đầu của booking id (in hoa)
+    # 2) UC-23/24: tour booking — QR dùng 8 ký tự đầu của booking id (in hoa),
+    #    có thể kèm prefix TT- (Hoặc TTTour...). Bỏ prefix rồi so với 8-hex.
+    tour_code = norm[2:] if norm.startswith("TT") else norm
     booking_result = await session.execute(
         select(TourBooking)
     )
-    tour_code = code.upper()
-    if tour_code.startswith("TT-"):
-        tour_code = tour_code[3:]
     for booking in booking_result.scalars().all():
         if booking.id.hex[:8].upper() == tour_code:
             pay_result = await session.execute(

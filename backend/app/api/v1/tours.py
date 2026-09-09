@@ -179,8 +179,8 @@ async def cancel_booking(
     if booking.status in (TourBookingStatus.cancelled.value, TourBookingStatus.attended.value):
         raise HTTPException(400, "Vé này không thể hủy")
     try:
-        await tour_service.cancel_booking(session, booking)
         await payment_service.refund_tour(session, booking)
+        await tour_service.cancel_booking(session, booking)
     except TourError as e:
         raise HTTPException(e.code, e.message)
     await session.commit()
@@ -222,6 +222,7 @@ async def mark_attended(
                 valid_from=today,
                 valid_until=today + timedelta(days=30),
                 active=True,
+                used_by_user_id=booking.customer_id,
             )
         )
         booking.voucher_issued = True

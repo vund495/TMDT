@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     account_no: str = ""
     account_name: str = ""
 
-    casso_api_key: str = ""
-    casso_webhook_secret: str = ""
+    sepay_api_key: str = ""
+    sepay_webhook_secret: str = ""
 
     vnpay_tmn_code: str = ""
     vnpay_hash_secret: str = ""
@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     vnpay_refund_url: str = "https://sandbox.vnpayment.vn/merchantv2/api/Transaction/refund"
 
     frontend_url: str = "http://localhost:5173"
+
+    # Danh sách origin được CORS chấp nhận, phân cách bằng dấu phẩy.
+    # Để trống sẽ fallback về [frontend_url, http://localhost:5173].
+    cors_origins: str = ""
+
+    # Thư mục lưu file upload (ảnh sản phẩm, bằng chứng khiếu nại...).
+    # Trên Render nên trỏ vào Disk mount (ví dụ /var/data/uploads) để không mất khi redeploy.
+    uploads_dir: str = "uploads"
 
 
 @lru_cache

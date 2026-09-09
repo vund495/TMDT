@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Award, RotateCcw, ScanLine, Truck } from "lucide-react";
 import { Money, Spinner, StatusBadge } from "../components/ui";
+import PayQRModal from "../components/PayQRModal";
 import { confirmReceipt, cancelOrder, getOrder, getShipmentOfOrder } from "../lib/api";
 
 export default function OrderDetail() {
   const { id = "" } = useParams();
   const qc = useQueryClient();
+  const [paying, setPaying] = useState(false);
 
   const order = useQuery({
     queryKey: ["order", id],
@@ -137,13 +140,21 @@ export default function OrderDetail() {
 
       <div className="mt-6 flex flex-wrap gap-3">
         {o.status === "pending_payment" && (
-          <button
-            onClick={() => cancel.mutate()}
-            disabled={cancel.isPending}
-            className="rounded-lg bg-gray-100 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-          >
-            Hủy đơn
-          </button>
+          <>
+            <button
+              onClick={() => setPaying(true)}
+              className="flex items-center gap-2 rounded-lg bg-dat-700 px-5 py-2.5 font-semibold text-white hover:bg-dat-800"
+            >
+              <ScanLine className="h-4 w-4" /> Thanh toán
+            </button>
+            <button
+              onClick={() => cancel.mutate()}
+              disabled={cancel.isPending}
+              className="rounded-lg bg-gray-100 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+            >
+              Hủy đơn
+            </button>
+          </>
         )}
         {o.status === "shipping" && (
           <button
@@ -165,6 +176,14 @@ export default function OrderDetail() {
           💡 Sản phẩm được đóng gói chống sốc theo tiêu chuẩn "Vỡ 1 đền 1". Nếu vỡ khi vận chuyển, bạn có thể tạo khiếu nại.
         </p>
       )}
+
+      <PayQRModal
+        open={paying}
+        onClose={() => setPaying(false)}
+        refType="order"
+        refId={o.id}
+        label={`đơn ${o.code}`}
+      />
     </div>
   );
 }

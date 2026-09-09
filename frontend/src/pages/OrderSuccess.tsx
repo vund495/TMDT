@@ -1,10 +1,54 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
 import type { OrderCreateOut } from "../types";
 import { Money } from "../components/ui";
+import { getPaymentStatus } from "../lib/api";
+import { toastOk } from "../lib/toast";
+
+const SAVE_KEY = "tmdt_last_order";
 
 export default function OrderSuccess() {
   const { state } = useLocation();
-  const data: OrderCreateOut | undefined = (state as { data?: OrderCreateOut } | null)?.data;
+  const [paid, setPaid] = useState(false);
+
+  const fromState = (state as { data?: OrderCreateOut } | null)?.data;
+  const [saved] = useState<OrderCreateOut | null>(() => {
+    const s = sessionStorage.getItem(SAVE_KEY);
+    if (s) {
+      try {
+        return JSON.parse(s) as OrderCreateOut;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const data = fromState ?? saved;
+
+  useEffect(() => {
+    if (data && !fromState) {
+      sessionStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    }
+  }, [data, fromState]);
+
+  useEffect(() => {
+    if (!data || data.order.status !== "pending_payment") return;
+    const check = async () => {
+      try {
+        const s = await getPaymentStatus("order", data.order.id);
+        if (s.status === "paid") {
+          setPaid(true);
+          toastOk(`Đơn ${data.order.code} đã thanh toán thành công`);
+        }
+      } catch {
+        // chưa có payment hoặc lỗi tạm thời — bỏ qua, poll tiếp
+      }
+    };
+    check();
+    const t = setInterval(check, 3000);
+    return () => clearInterval(t);
+  }, [data]);
 
   if (!data) {
     return (
@@ -17,34 +61,55 @@ export default function OrderSuccess() {
     );
   }
 
+  const showQr = data.order.status === "pending_payment" && !paid;
+
   return (
     <div className="mx-auto max-w-lg text-center">
       <div className="text-6xl">🎉</div>
-      <h1 className="mt-3 text-2xl font-bold text-ceramic-900">Đặt hàng thành công!</h1>
+      <h1 className="mt-3 text-2xl font-bold text-ceramic-900">
+        {paid ? "Thanh toán thành công!" : "Đặt hàng thành công!"}
+      </h1>
       <p className="mt-2 text-gray-600">
         Mã đơn: <span className="font-semibold">{data.order.code}</span>
       </p>
 
       <div className="mt-6 rounded-xl border border-ceramic-100 bg-white p-6">
-        <h2 className="font-semibold text-ceramic-900">Thanh toán VietQR</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Quét mã bên dưới bằng app ngân hàng để thanh toán{" "}
-          <Money value={data.order.total} className="font-bold text-dat-700" />.
-        </p>
-        {data.qr_url ? (
-          <img
-            src={data.qr_url}
-            alt="Mã QR thanh toán"
-            className="mx-auto mt-4 h-56 w-56 rounded-lg border border-gray-200"
-          />
+        {paid ? (
+          <div className="py-2">
+            <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" aria-hidden />
+            <p className="mt-3 text-sm text-gray-600">
+              Chúng tôi đã nhận được khoản thanh toán VietQR. Đơn hàng của bạn đang được
+              chuẩn bị và hộ chiếu sản phẩm trong đơn đã được mở khóa.
+            </p>
+          </div>
+        ) : showQr ? (
+          <>
+            <h2 className="font-semibold text-ceramic-900">Thanh toán VietQR</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Quét mã bên dưới bằng app ngân hàng để thanh toán{" "}
+              <Money value={data.order.total} className="font-bold text-dat-700" />.
+            </p>
+            {data.qr_url ? (
+              <img
+                src={data.qr_url}
+                alt="Mã QR thanh toán"
+                className="mx-auto mt-4 h-56 w-56 rounded-lg border border-gray-200"
+              />
+            ) : (
+              <div className="mx-auto mt-4 flex h-56 w-56 items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm text-gray-400">
+                Không có mã QR
+              </div>
+            )}
+            <p className="mt-3 text-xs text-gray-500">
+              Trang sẽ tự phát hiện thanh toán thành công — không cần tải lại.
+            </p>
+          </>
         ) : (
-          <div className="mx-auto mt-4 flex h-56 w-56 items-center justify-center rounded-lg border border-dashed border-gray-300 text-sm text-gray-400">
-            Không có mã QR
+          <div className="py-2">
+            <CheckCircle2 className="mx-auto h-14 w-14 text-green-600" aria-hidden />
+            <p className="mt-3 text-sm text-gray-600">Đơn hàng đã được xác nhận thanh toán.</p>
           </div>
         )}
-        <p className="mt-3 text-xs text-gray-500">
-          Đơn sẽ được chuẩn bị sau khi thanh toán được xác nhận.
-        </p>
       </div>
 
       <div className="mt-6 flex justify-center gap-3">

@@ -12,3 +12,4 @@ export * from "./admin";
 export * from "./upload";
 export * from "./notifications";
 export * from "./vnpay";
+export * from "./payments";

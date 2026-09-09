@@ -120,7 +120,8 @@ export type OrderStatus =
   | "completed"
   | "disputing"
   | "returned"
-  | "return_received";
+  | "return_received"
+  | "cancelled";
 
 export interface Order {
   id: string;

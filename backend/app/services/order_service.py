@@ -15,7 +15,7 @@ from app.models.user import User
 from app.models.voucher import Voucher
 from app.models.workshop import Workshop
 
-SHIPPING_FEE = 20000
+SHIPPING_FEE = 0
 MIN_FREE_SHIPPING = 500000
 COMMISSION_RATE = 0.10
 

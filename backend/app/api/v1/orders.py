@@ -132,7 +132,7 @@ async def cancel_order(
         raise HTTPException(404, "Không tìm thấy đơn hàng")
     if order.status != OrderStatus.pending_payment.value:
         raise HTTPException(400, "Chỉ hủy được đơn chưa thanh toán")
-    order.status = OrderStatus.returned.value
+    order.status = OrderStatus.cancelled.value
 
     items_result = await session.execute(
         select(OrderItem).where(OrderItem.order_id == order.id)

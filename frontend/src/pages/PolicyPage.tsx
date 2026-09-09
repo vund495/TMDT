@@ -32,7 +32,7 @@ const POLICIES = [
     title: "Hoàn tiền & thanh toán",
     color: "from-lam-700 to-lam-900",
     items: [
-      "Thanh toán trực tuyến qua VietQR/Casso, đối soát tự động và an toàn.",
+      "Thanh toán trực tuyến qua VietQR/SePay, đối soát tự động và an toàn.",
       "Hoàn tiền được xử lý trong 3-7 ngày làm việc kể từ khi khiếu nại được phê duyệt, chuyển về tài khoản/ngân hàng của khách.",
       "Mọi giao dịch được ghi nhận minh bạch trên hệ thống.", 
     ],

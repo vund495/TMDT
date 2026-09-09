@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -21,17 +21,34 @@ class PaymentRead(ORMModel):
     created_at: datetime
 
 
-class CassoDataItem(BaseModel):
-    id: int
-    tid: int | None = None
-    description: str | None = None
+class PaymentQrIn(BaseModel):
+    ref_type: Literal["order", "tour"]
+    ref_id: uuid.UUID
+
+
+class PaymentQrOut(BaseModel):
+    qr_url: str | None = None
+    code: str
     amount: int
-    when: str | None = None
-    bank_sub_acc_id: str | None = None
-    subAccId: str | None = None
-    bankAccountId: int | None = None
+    payment_id: uuid.UUID | None = None
+    status: str = "pending"
 
 
-class CassoTransaction(BaseModel):
-    error: int | None = None
-    data: list[CassoDataItem] | None = None
+class SePayTransaction(BaseModel):
+    """Payload webhook SePay (1 giao dịch / request).
+
+    Docs: https://docs.sepay.vn/tich-hop-webhooks.html#du-lieu
+    """
+
+    id: int | None = None
+    gateway: str | None = None
+    transactionDate: str | None = None
+    accountNumber: str | None = None
+    subAccount: str | None = None
+    code: str | None = None
+    content: str | None = None
+    transferType: str | None = None
+    description: str | None = None
+    transferAmount: int | float | None = None
+    accumulated: int | float | None = None
+    referenceCode: str | None = None

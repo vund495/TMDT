@@ -20,6 +20,10 @@ pgadmin_pgpass
 pgadmin_servers.json
 pgadmin_data/
 
+# Log runtime + file upload
+backend_logs.txt
+uploads/
+
 # Ghi chu tien do noi bo
 TIEN-DO.md
 

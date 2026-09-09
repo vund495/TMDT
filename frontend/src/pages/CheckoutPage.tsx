@@ -200,7 +200,7 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Phí vận chuyển</span>
-            <span>20.000₫</span>
+            <span>Miễn phí</span>
           </div>
         </div>
         <button

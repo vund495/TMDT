@@ -14,7 +14,7 @@ from app.core.security import get_current_user
 from app.models.order import Order
 from app.models.payment import Payment
 from app.models.tour import TourBooking
-from app.schemas.payment import CassoTransaction, PaymentRead
+from app.schemas.payment import PaymentQrIn, PaymentQrOut, PaymentRead, SePayTransaction
 from app.services import payment_service
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
@@ -29,68 +29,151 @@ class VnpayCreateOut(BaseModel):
     txn_ref: str
 
 
-def extract_order_code(description: str) -> str | None:
-    match = re.search(r"TT-[A-Z0-9]{6,12}", description or "")
-    return match.group(0) if match else None
+@router.post("/qr", response_model=PaymentQrOut)
+async def get_payment_qr(
+    body: PaymentQrIn,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Trả mã QR VietQR cho đơn/tour đang chờ thanh toán của chính khách."""
+    uid = uuid.UUID(str(current_user["id"]))
+
+    if body.ref_type == "order":
+        order = await session.get(Order, body.ref_id)
+        if order is None or order.customer_id != uid:
+            raise HTTPException(404, "Không tìm thấy đơn hàng")
+        code = order.code
+        amount = int(order.total)
+    else:
+        booking = await session.get(TourBooking, body.ref_id)
+        if booking is None or booking.customer_id != uid:
+            raise HTTPException(404, "Không tìm thấy vé tour")
+        code = booking.id.hex[:8].upper()
+        amount = int(booking.total_amount)
+
+    payment = await payment_service.find_payment_by_ref(session, code)
+    if payment is None or payment.status == "paid":
+        raise HTTPException(400, "Thanh toán đã hoàn tất hoặc không tồn tại")
+
+    qr_url = await payment_service.qr_url_for_ref(code, amount)
+    return PaymentQrOut(qr_url=qr_url, code=code, amount=amount, payment_id=payment.id)
 
 
-def _verify_casso_signature(
+def extract_order_code(text: str) -> str | None:
+    """Trích mã đơn (TT-XXXXXXXX) hoặc mã tour (8 hex, booking id) từ nội dung CK.
+
+    Ngân hàng có thể bỏ dấu '-' trong content (vd MRB bỏ dấu gạch trong
+    "TT-OEVWLY0T" thành "TTOEVWLY0T"), nên cho phép TT có hoặc không dấu '-'.
+    Ưu tiên pattern TT trước để tránh khớp nhầm dãy số dài trong content ngân hàng.
+    """
+    m = re.search(r"TT-?[A-Z0-9]{6,12}", text or "", re.IGNORECASE)
+    if m:
+        return m.group(0).upper()
+    m = re.search(r"(?<![A-F0-9])[A-F0-9]{8}(?![A-F0-9])", text or "", re.IGNORECASE)
+    return m.group(0).upper() if m else None
+
+
+def _verify_sepay_auth(
     raw_body: bytes,
     headers: dict,
 ) -> bool:
-    """Xác thực chữ ký webhook Casso (HMAC-SHA256, header X-Webhook-Signature).
+    """Xác thực webhook SePay.
 
-    Nếu chưa cấu hình CASSO_WEBHOOK_SECRET trong .env thì trả True
-    (chế độ dev/mock), ghi chú cho quản trị biết.
+    Hỗ trợ 2 kiểu SePay gửi trong header:
+    - API Key: `Authorization: Apikey <SEPAY_API_KEY>`
+    - HMAC-SHA256: headers `X-SePay-Signature: sha256=<hex>` + `X-SePay-Timestamp`
+      với chuỗi ký `{timestamp}.{raw_body}` theo SEPAy_WEBHOOK_SECRET.
+    Nếu chưa cấu hình gì thì trả True (chế độ dev/mock).
     """
-    secret = get_settings().casso_webhook_secret
-    if not secret:
-        return True  # dev/mock: chưa cấu hình, chấp nhận
-
     import hashlib
     import hmac
 
-    signature = headers.get("x-webhook-signature") or headers.get("validation")
-    if not signature:
+    settings = get_settings()
+    api_key = settings.sepay_api_key
+    secret = settings.sepay_webhook_secret
+    if not api_key and not secret:
+        return True  # dev/mock: chưa cấu hình, chấp nhận
+
+    if api_key:
+        auth = headers.get("authorization") or headers.get("Authorization") or ""
+        if not auth.startswith("Apikey "):
+            return False
+        provided = auth.removeprefix("Apikey ").strip()
+        return hmac.compare_digest(provided, api_key)
+
+    signature = headers.get("x-sepay-signature") or headers.get("X-SePay-Signature") or ""
+    timestamp = headers.get("x-sepay-timestamp") or headers.get("X-SePay-Timestamp") or ""
+    if not signature.startswith("sha256=") or not timestamp:
         return False
-    expected = hmac.new(
-        secret.encode(), raw_body, hashlib.sha256
+    expected = "sha256=" + hmac.new(
+        secret.encode(), timestamp.encode() + b"." + raw_body, hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(expected, signature)
 
 
-@router.post("/webhook/casso")
-async def casso_webhook(
-    body: CassoTransaction,
+@router.post("/webhook/sepay")
+async def sepay_webhook(
+    body: SePayTransaction,
     request: Request,
     session: AsyncSession = Depends(get_session),
 ):
     """UC-15/21: webhook đối soát giao dịch VietQR, idempotent.
 
-    Xác thực chữ ký HMAC-SHA256 theo CASSO_WEBHOOK_SECRET (nếu đã cấu hình).
+    Xác thực theo SEPAy_API_KEY/SEPAY_WEBHOOK_SECRET (nếu đã cấu hình).
+    Chỉ xử lý giao dịch tiền vào (transferType = in), đối soát mã TT-.../mã tour
+    theo field content/code. SePay retry tối đa 7 lần nên endpoint phải idempotent.
     """
     raw_body = await request.body()
-    if not _verify_casso_signature(raw_body, dict(request.headers)):
+    if not _verify_sepay_auth(raw_body, dict(request.headers)):
         raise HTTPException(401, "Chữ ký webhook không hợp lệ")
 
-    if body.data is None:
-        return {"processed": True, "matched": 0}
+    if body.transferType and body.transferType.lower() != "in":
+        return {"success": True, "processed": True, "matched": 0}
 
-    matched = 0
-    for tx in body.data:
-        code = extract_order_code(tx.description or "")
-        if not code:
-            continue
-        payment = await payment_service.find_payment_by_ref(session, code)
-        if payment is None or int(payment.amount) != int(tx.amount):
-            continue
-        updated = await payment_service.record_payment(
-            session, payment.id, str(tx.id)
-        )
-        if updated:
-            matched += 1
+    code = extract_order_code(body.code) or extract_order_code(body.content)
+    if not code:
+        return {"success": True, "processed": True, "matched": 0}
+
+    amount = int(body.transferAmount or 0)
+    if amount <= 0:
+        return {"success": True, "processed": True, "matched": 0}
+
+    payment = await payment_service.find_payment_by_ref(session, code)
+    if payment is None or int(payment.amount) != amount:
+        return {"success": True, "processed": True, "matched": 0}
+
+    updated = await payment_service.record_payment(
+        session, payment.id, f"sepay:{body.id}"
+    )
     await session.commit()
-    return {"processed": True, "matched": matched}
+    return {"success": True, "processed": True, "matched": 1 if updated else 0}
+
+
+@router.post("/status", response_model=PaymentQrOut)
+async def get_payment_status(
+    body: PaymentQrIn,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Trả trạng thái thanh toán hiện tại cho đơn/tour (để FE auto-refresh)."""
+    uid = uuid.UUID(str(current_user["id"]))
+
+    if body.ref_type == "order":
+        order = await session.get(Order, body.ref_id)
+        if order is None or order.customer_id != uid:
+            raise HTTPException(404, "Không tìm thấy đơn hàng")
+        code = order.code
+        amount = int(order.total)
+    else:
+        booking = await session.get(TourBooking, body.ref_id)
+        if booking is None or booking.customer_id != uid:
+            raise HTTPException(404, "Không tìm thấy vé tour")
+        code = booking.id.hex[:8].upper()
+        amount = int(booking.total_amount)
+
+    payment = await payment_service.find_payment_by_ref(session, code)
+    status = payment.status if payment is not None else "missing"
+    return PaymentQrOut(qr_url=None, code=code, amount=amount, payment_id=payment.id if payment else None, status=status)
 
 
 @router.post("/vnpay/create", response_model=VnpayCreateOut)
