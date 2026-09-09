@@ -132,9 +132,8 @@ export default function CustomerLayout() {
                                 setNotifOpen(false);
                                 if (!n.is_read) markRead.mutate(n.id);
                               }}
-                              className={`block border-b border-border-soft px-4 py-3 hover:bg-cream-50 ${
-                                n.is_read ? "" : "bg-brand-lam/5"
-                              }`}
+                              className={`block border-b border-border-soft px-4 py-3 hover:bg-cream-50 ${n.is_read ? "" : "bg-brand-lam/5"
+                                }`}
                             >
                               <p className="text-sm font-semibold text-ink">
                                 {n.is_read ? null : <span className="mr-1 inline-block h-2 w-2 rounded-full bg-men-700" />}
@@ -270,7 +269,7 @@ export default function CustomerLayout() {
               <span className="font-extrabold text-ink">VietCraft Bát Tràng</span>
             </div>
             <p className="mt-3 text-sm text-ink-soft">
-              Nơi đất kể chuyện, lửa giữ hồn. Gốm sứ Bát Tràng chính gốc, minh bạch qua hộ chiếu QR.
+              VietCraft Bát Tràng - Nền tảng thương mại điện tử kết nối trực tiếp xưởng sản xuất và người tiêu dùng. Cung cấp giải pháp quà tặng B2B/B2C và số hóa câu chuyện làng nghề thủ công.
             </p>
           </div>
 

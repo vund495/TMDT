@@ -63,7 +63,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Inter"', "system-ui", "sans-serif"],
+        sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        serif: ['"Playfair Display"', "Georgia", "serif"],
       },
       boxShadow: {
         card: "0 1px 2px rgba(38,34,27,0.06), 0 4px 12px rgba(38,34,27,0.06)",
