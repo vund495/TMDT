@@ -15,7 +15,13 @@ _engine = None
 _sessionmaker = None
 
 if get_settings().database_url:
-    _engine = create_async_engine(get_settings().database_url, pool_pre_ping=True)
+    _ssl = get_settings().db_ssl
+    _connect_args = {"statement_cache_size": 0, "ssl": _ssl} if _ssl else {}
+    _engine = create_async_engine(
+        get_settings().database_url,
+        pool_pre_ping=True,
+        connect_args=_connect_args,
+    )
     _sessionmaker = async_sessionmaker(_engine, expire_on_commit=False)
 
 

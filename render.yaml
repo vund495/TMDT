@@ -1,4 +1,5 @@
 # Render Blueprint — tạo môi trường production chỉ với 1 lần bấm "New + => Blueprint"
+# DB dùng Supabase (Postgres free 500MB), không tạo Postgres ở Render.
 # Sau khi tạo, bổ sung các biến sync:false ngay trên dashboard trước khi service start.
 #
 # Lưu ý:
@@ -6,12 +7,6 @@
 #    VITE_API_BASE_URL rồi redeploy.
 #  - UPLOADS_DIR nên trỏ vào Disk mount (Render plan >= Starter) để ảnh upload
 #    không biến mất khi redeploy. Với plan free, file sẽ mất theo instance.
-
-databases:
-  - name: tmdt-db
-    plan: free
-    databaseName: tmdt
-    user: tmdt
 
 services:
   - type: web
@@ -24,10 +19,11 @@ services:
       paths:
         - backend/**
     envVars:
+      # Dán connection string của Supabase (Pooler, thẻ Transaction, port 6543).
       - key: DATABASE_URL
-        fromDatabase:
-          name: tmdt-db
-          property: connectionString
+        sync: false
+      - key: DB_SSL
+        value: require
       - key: SECRET_KEY
         sync: false
       - key: DEBUG

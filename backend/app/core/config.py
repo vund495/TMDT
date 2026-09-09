@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # Trên Render nên trỏ vào Disk mount (ví dụ /var/data/uploads) để không mất khi redeploy.
     uploads_dir: str = "uploads"
 
+    # Chế độ SSL khi kết nối database. Supabase bắt buộc mã hóa => đặt "require".
+    # Để trống (mặc định) khi chạy local Docker Postgres.
+    db_ssl: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:
