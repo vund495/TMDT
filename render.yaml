@@ -10,7 +10,7 @@
 
 services:
   - type: web
-    name: tmdt-backend
+    name: vietcraft-backend
     runtime: docker
     region: singapore
     plan: free
@@ -51,6 +51,7 @@ services:
 
 # Frontend không tạo qua Blueprint (Render chưa hỗ trợ "static" trong Blueprint).
 # Tạo thủ công: Render => New + => Static Site => chọn repo =>
+#   Name          : vietcraft-frontend  (URL sẽ là https://vietcraft-frontend.onrender.com)
 #   Build Command : npm ci && npm run build
 #   Publish Dir   : dist
-#   Env           : VITE_API_BASE_URL = https://<backend>.onrender.com
+#   Env           : VITE_API_BASE_URL = https://vietcraft-backend.onrender.com
