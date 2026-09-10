@@ -9,17 +9,16 @@ jobs:
   pg-dump:
     runs-on: ubuntu-latest
     steps:
-      - name: Install postgresql-client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
-      - name: Dump database
+      - name: Dump database (postgres:17 tar)
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
         run: |
           mkdir -p dump
-          pg_dump "$DATABASE_URL" -Fc -f "dump/backup-$(date +%Y%m%d-%H%M%S).dump"
+          docker run --rm \
+            -e DATABASE_URL \
+            -v "$PWD/dump:/out" \
+            postgres:17 \
+            pg_dump "$DATABASE_URL" -Fc -f "/out/backup-$(date +%Y%m%d-%H%M%S).dump"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
