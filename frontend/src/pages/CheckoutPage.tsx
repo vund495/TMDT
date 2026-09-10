@@ -74,7 +74,7 @@ export default function CheckoutPage() {
 
   if (cart.isLoading) return <Spinner />;
   if (!cart.data || cart.data.items.length === 0)
-    return <p className="text-gray-600">Giỏ hàng trống - hãy <a href="/tim-kiem" className="text-brand-lam underline">chọn sản phẩm</a>.</p>;
+    return <p className="text-gray-600">Giỏ hàng trống - hãy <Link to="/tim-kiem" className="text-brand-lam underline">chọn sản phẩm</Link>.</p>;
 
   const submitOrder = () => {
     setTried(true);

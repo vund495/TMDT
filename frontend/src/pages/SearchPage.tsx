@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { SearchX } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { EmptyState, Skeleton } from "../components/ui";
@@ -231,9 +231,9 @@ export default function SearchPage() {
           aria-label="Lọc theo dòng sản phẩm"
         >
           {themes.map((t) => (
-            <a
+            <Link
               key={t}
-              href={`/tim-kiem?theme=${encodeURIComponent(t!)}`}
+              to={`/tim-kiem?theme=${encodeURIComponent(t!)}`}
               aria-current={theme === t ? "true" : undefined}
               className={cn(
                 "shrink-0 snap-start rounded-full border px-3 py-1 text-xs font-medium transition-colors",
@@ -243,7 +243,7 @@ export default function SearchPage() {
               )}
             >
               {t}
-            </a>
+            </Link>
           ))}
         </div>
       )}
