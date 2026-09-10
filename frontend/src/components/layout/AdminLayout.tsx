@@ -17,6 +17,7 @@ export default function AdminLayout() {
             { label: "Sản phẩm chờ duyệt", to: "/admin/san-pham" },
             { label: "Người dùng", to: "/admin/nguoi-dung" },
             { label: "Khiếu nại", to: "/admin/khieu-nai" },
+            { label: "Ưu đãi (Voucher)", to: "/admin/uu-dai" },
             { label: "Đặt tour", to: "/admin/tour" },
             { label: "Đối soát doanh thu", to: "/admin/doi-soat" },
             { label: "Lịch sử giao dịch", to: "/admin/giao-dich" },
