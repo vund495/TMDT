@@ -21,7 +21,7 @@ jobs:
             bash -c 'pg_dump "$DATABASE_URL" -Fc -f "/out/backup-$(date +%Y%m%d-%H%M%S).dump"'
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: supabase-backup
           path: dump/
