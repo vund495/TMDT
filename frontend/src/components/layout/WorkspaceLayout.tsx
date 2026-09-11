@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Amphora, LogOut, Search } from "lucide-react";
+import { Amphora, LogOut, Menu, Search, X } from "lucide-react";
 import { cn } from "../../utils/ui";
 import { useAuthStore } from "../../store/authStore";
 import PageTransition from "../motion/PageTransition";
@@ -28,6 +29,7 @@ export default function WorkspaceLayout({
   const profile = useAuthStore((s) => s.profile);
   const navigate = useNavigate();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen">
@@ -101,9 +103,18 @@ export default function WorkspaceLayout({
             accent
           )}
         >
-          <Link to="/" className="flex items-center gap-1.5 font-extrabold">
-            <Amphora className="h-5 w-5" aria-hidden /> {title}
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMenuOpen(true)}
+              aria-label="Mở menu"
+              className="rounded-md bg-white/10 p-1.5 hover:bg-white/20"
+            >
+              <Menu className="h-5 w-5" aria-hidden />
+            </button>
+            <Link to="/" className="flex items-center gap-1.5 font-extrabold">
+              <Amphora className="h-5 w-5" aria-hidden /> {title}
+            </Link>
+          </div>
           <span className="text-sm">
             {profile?.full_name?.split(" ").pop()}
           </span>
@@ -114,6 +125,89 @@ export default function WorkspaceLayout({
           </PageTransition>
         </main>
       </div>
+
+      {/* mobile drawer nav */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-ink/80 backdrop-blur-md"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside
+            className={cn(
+              "absolute bottom-0 top-0 left-0 flex h-full w-72 max-w-[85vw] flex-col bg-gradient-to-b p-4 text-white shadow-elevated",
+              gradient
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 px-1">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+                  <Amphora className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider opacity-70">{eyebrow}</p>
+                  <p className="text-base font-extrabold leading-tight">{title}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMenuOpen(false)}
+                aria-label="Đóng menu"
+                className="rounded-md bg-white/10 p-1.5 hover:bg-white/20"
+              >
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+
+            <div className="mt-6 flex-1 space-y-6 overflow-y-auto">
+              {nav.map((group) => (
+                <div key={group.title}>
+                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wider opacity-50">
+                    {group.title}
+                  </p>
+                  <div className="mt-1 space-y-0.5">
+                    {group.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setMenuOpen(false)}
+                        className={({ isActive }) =>
+                          cn(
+                            "block rounded-lg px-2 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white",
+                            isActive && "bg-white/15 text-white"
+                          )
+                        }
+                        end={item.to.endsWith("/xuong") || item.to.endsWith("/admin")}
+                      >
+                        {item.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 border-t border-white/15 pt-3">
+              <Link
+                to="/"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-white/80 hover:bg-white/10"
+              >
+                <Search className="h-4 w-4" aria-hidden /> Xem sàn như khách
+              </Link>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  logout();
+                  navigate("/");
+                }}
+                className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-white/80 hover:bg-white/10"
+              >
+                <LogOut className="h-4 w-4" aria-hidden /> {logoutLabel}
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
