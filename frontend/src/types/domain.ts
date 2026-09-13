@@ -136,6 +136,8 @@ export interface Order {
   receiver_name: string;
   receiver_phone: string;
   shipping_address: string;
+  shipping_method: string;
+  shipping_province?: string | null;
   anti_shock_packed: boolean;
   replacement_of_id?: string | null;
   created_at: string;

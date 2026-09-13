@@ -23,6 +23,8 @@ class Order(Base):
     receiver_name: Mapped[str] = mapped_column(String(255))
     receiver_phone: Mapped[str] = mapped_column(String(32))
     shipping_address: Mapped[str] = mapped_column(String(500))
+    shipping_method: Mapped[str] = mapped_column(String(20), default="delivery")
+    shipping_province: Mapped[str | None] = mapped_column(String(64), nullable=True)
     anti_shock_packed: Mapped[bool] = mapped_column(Boolean, default=False)
     replacement_of_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("orders.id"), nullable=True

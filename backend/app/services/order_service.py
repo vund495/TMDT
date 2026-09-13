@@ -14,9 +14,8 @@ from app.models.product import Product
 from app.models.user import User
 from app.models.voucher import Voucher
 from app.models.workshop import Workshop
+from app.services import shipping_service
 
-SHIPPING_FEE = 0
-MIN_FREE_SHIPPING = 500000
 COMMISSION_RATE = 0.10
 
 
@@ -57,8 +56,10 @@ async def apply_voucher(
     return discount, voucher
 
 
-async def _compute_shipping(workshop: Workshop, subtotal: int) -> int:
-    return SHIPPING_FEE
+async def _compute_shipping(
+    method: str, province: str | None, subtotal: int
+) -> int:
+    return shipping_service.compute_shipping(method, province, subtotal)
 
 
 async def build_order(
@@ -68,6 +69,8 @@ async def build_order(
     voucher_code: str | None,
     receiver: dict,
     anti_shock_packed: bool,
+    shipping_method: str = "delivery",
+    shipping_province: str | None = None,
 ) -> Order:
     """items: list of {"product_id": UUID, "quantity": int}"""
     if not items:
@@ -98,7 +101,7 @@ async def build_order(
         order_items.append((product, price, line_total, item["quantity"]))
 
     discount, voucher = await apply_voucher(session, voucher_code, subtotal)
-    shipping_fee = await _compute_shipping(workshop_id, subtotal)
+    shipping_fee = await _compute_shipping(shipping_method, shipping_province, subtotal)
     total = subtotal - discount + shipping_fee
     if total < 0:
         total = 0
@@ -115,6 +118,8 @@ async def build_order(
         receiver_name=receiver["name"],
         receiver_phone=receiver["phone"],
         shipping_address=receiver["address"],
+        shipping_method=shipping_method,
+        shipping_province=shipping_service.normalize_province(shipping_province),
         anti_shock_packed=anti_shock_packed,
     )
     session.add(order)

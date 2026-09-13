@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.enums.order_status import OrderStatus
 from app.models.order import Order, Shipment
+from app.schemas.order import ShippingQuoteIn, ShippingQuoteOut
+from app.services import shipping_service
 
 router = APIRouter(prefix="/shipping", tags=["Shipping"])
 
@@ -13,6 +15,22 @@ CARRIER_EVENT_STATUS = {
     "delivered": "completed",
     "returned": "returned",
 }
+
+
+@router.post("/quote", response_model=ShippingQuoteOut)
+async def shipping_quote(body: ShippingQuoteIn):
+    """Tính phí vận chuyển theo 3 quy tắc (pickup/>=500k; HN-HCM 15k; còn lại 35k)."""
+    if body.shipping_method not in ("pickup", "delivery"):
+        raise HTTPException(400, "shipping_method phải là 'pickup' hoặc 'delivery'")
+    fee = shipping_service.compute_shipping(
+        body.shipping_method, body.shipping_province, body.subtotal
+    )
+    return ShippingQuoteOut(
+        shipping_method=body.shipping_method,
+        shipping_province=shipping_service.normalize_province(body.shipping_province),
+        subtotal=body.subtotal,
+        fee=fee,
+    )
 
 
 @router.post("/webhook")

@@ -17,7 +17,15 @@ class OrderCreateIn(BaseModel):
     receiver_name: str
     receiver_phone: str
     shipping_address: str
+    shipping_method: str = "delivery"  # pickup | delivery
+    shipping_province: str | None = None
     anti_shock_packed: bool = False
+
+
+class ShippingQuoteIn(BaseModel):
+    shipping_method: str = "delivery"  # pickup | delivery
+    shipping_province: str | None = None
+    subtotal: int = 0
 
 
 class OrderItemRead(ORMModel):
@@ -42,9 +50,18 @@ class OrderRead(ORMModel):
     receiver_name: str
     receiver_phone: str
     shipping_address: str
+    shipping_method: str
+    shipping_province: str | None = None
     anti_shock_packed: bool
     replacement_of_id: uuid.UUID | None = None
     created_at: datetime
+
+
+class ShippingQuoteOut(BaseModel):
+    shipping_method: str
+    shipping_province: str | None = None
+    subtotal: int
+    fee: int
 
 
 class OrderDetail(OrderRead):

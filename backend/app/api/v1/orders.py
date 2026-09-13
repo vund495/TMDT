@@ -54,6 +54,8 @@ async def create_order(
             body.voucher_code,
             receiver,
             body.anti_shock_packed,
+            body.shipping_method,
+            body.shipping_province,
         )
         payment = await payment_service.create_order_payment(session, order)
     except OrderError as e:

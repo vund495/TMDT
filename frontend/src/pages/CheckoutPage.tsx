@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Field, Money, Spinner, toastError } from "../components/ui";
-import { createOrder, getCart, createVnpayPayment, validateVoucher } from "../lib/api";
+import { createOrder, getCart, createVnpayPayment, validateVoucher, shippingQuote } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
+import { VIETNAM_PROVINCES } from "../constants/provinces";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ export default function CheckoutPage() {
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingMethod, setShippingMethod] = useState<"pickup" | "delivery">("delivery");
+  const [province, setProvince] = useState("");
   const [antiShock, setAntiShock] = useState(true);
   const [voucher, setVoucher] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
@@ -22,7 +25,24 @@ export default function CheckoutPage() {
   const phoneDigits = receiverPhone.replace(/\D/g, "");
   const nameError = tried && !receiverName.trim() ? "Nhập họ tên người nhận" : undefined;
   const phoneError = tried && phoneDigits.length < 9 ? "Nhập số điện thoại (ít nhất 9 chữ số)" : undefined;
-  const addressError = tried && !shippingAddress.trim() ? "Nhập địa chỉ giao hàng" : undefined;
+  const addressError =
+    tried && shippingMethod === "delivery" && !shippingAddress.trim() ? "Nhập địa chỉ giao hàng" : undefined;
+  const provinceError =
+    tried && shippingMethod === "delivery" && !province ? "Chọn tỉnh/thành" : undefined;
+
+  const cartTotal = cart.data?.total ?? 0;
+
+  const quote = useQuery({
+    queryKey: ["shipping-quote", shippingMethod, province, cartTotal],
+    queryFn: () =>
+      shippingQuote({
+        shipping_method: shippingMethod,
+        shipping_province: province || undefined,
+        subtotal: cartTotal,
+      }),
+    enabled: isAuthenticated && !!cart.data && shippingMethod === "delivery" && !!province,
+  });
+  const shippingFee = shippingMethod === "pickup" ? 0 : (quote.data?.fee ?? 0);
 
   const checkVoucher = useMutation({
     mutationFn: () => validateVoucher(voucher),
@@ -39,6 +59,8 @@ export default function CheckoutPage() {
         receiver_name: receiverName,
         receiver_phone: receiverPhone,
         shipping_address: shippingAddress,
+        shipping_method: shippingMethod,
+        shipping_province: shippingMethod === "delivery" ? province || null : null,
         anti_shock_packed: antiShock,
       }),
     onSuccess: (data) => {
@@ -78,13 +100,105 @@ export default function CheckoutPage() {
 
   const submitOrder = () => {
     setTried(true);
-    if (!receiverName.trim() || phoneDigits.length < 9 || !shippingAddress.trim()) return;
+    if (!receiverName.trim() || phoneDigits.length < 9) return;
+    if (shippingMethod === "delivery" && (!province || !shippingAddress.trim())) return;
     placeOrder.mutate();
   };
+
+  const feeLabel = shippingMethod === "pickup"
+    ? "Miễn phí"
+    : !province
+      ? "—"
+      : quote.isFetching
+        ? "..."
+        : shippingFee === 0
+          ? "Miễn phí"
+          : <Money value={shippingFee} />;
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
+        <section className="rounded-xl border border-ceramic-100 bg-white p-5">
+          <h2 className="font-semibold text-ceramic-900">Phương thức vận chuyển</h2>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm ${
+                shippingMethod === "delivery" ? "border-dat-600 bg-dat-50" : "border-gray-200 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="method"
+                checked={shippingMethod === "delivery"}
+                onChange={() => setShippingMethod("delivery")}
+                className="mt-0.5 accent-dat-600"
+              />
+              <span>
+                <span className="font-semibold text-ceramic-900">Giao tận nơi</span>
+                <br />
+                <span className="text-xs text-gray-500">
+                  Hà Nội / TP.HCM: 15.000đ · Tỉnh khác: 35.000đ
+                  <br />
+                  Miễn phí cho đơn từ 500.000đ
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm ${
+                shippingMethod === "pickup" ? "border-dat-600 bg-dat-50" : "border-gray-200 bg-white"
+              }`}
+            >
+              <input
+                type="radio"
+                name="method"
+                checked={shippingMethod === "pickup"}
+                onChange={() => setShippingMethod("pickup")}
+                className="mt-0.5 accent-dat-600"
+              />
+              <span>
+                <span className="font-semibold text-ceramic-900">Khách tự đến lấy</span>
+                <br />
+                <span className="text-xs text-gray-500">Miễn phí vận chuyển - qua gian hàng xưởng</span>
+              </span>
+            </label>
+          </div>
+
+          {shippingMethod === "delivery" && (
+            <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="province">
+                  Tỉnh / Thành phố
+                </label>
+                <select
+                  id="province"
+                  value={province}
+                  onChange={(e) => setProvince(e.target.value)}
+                  className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                    provinceError
+                      ? "border-red-400 focus:ring-red-200"
+                      : "border-gray-200 focus:border-dat-600 focus:ring-dat-200"
+                  }`}
+                >
+                  <option value="">Chọn tỉnh/thành...</option>
+                  {VIETNAM_PROVINCES.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+                {provinceError && <p className="mt-1 text-xs text-red-600">{provinceError}</p>}
+              </div>
+              <Field
+                label="Địa chỉ giao hàng"
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                placeholder="Số nhà, đường, phường/xã, quận/huyện"
+                error={addressError}
+              />
+            </div>
+          )}
+        </section>
+
         <section className="rounded-xl border border-ceramic-100 bg-white p-5">
           <h2 className="font-semibold text-ceramic-900">Thông tin nhận hàng</h2>
           <div className="mt-3 space-y-3">
@@ -102,13 +216,6 @@ export default function CheckoutPage() {
               placeholder="09xx xxx xxx"
               inputMode="tel"
               error={phoneError}
-            />
-            <Field
-              label="Địa chỉ giao hàng"
-              value={shippingAddress}
-              onChange={(e) => setShippingAddress(e.target.value)}
-              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh"
-              error={addressError}
             />
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" checked={antiShock} onChange={(e) => setAntiShock(e.target.checked)} />
@@ -136,7 +243,8 @@ export default function CheckoutPage() {
           />
           {voucherMsg && <p className="mt-2 text-sm">{voucherMsg}</p>}
         </section>
-      <section className="rounded-xl border border-ceramic-100 bg-white p-5">
+
+        <section className="rounded-xl border border-ceramic-100 bg-white p-5">
           <h2 className="font-semibold text-ceramic-900">Phương thức thanh toán</h2>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <label
@@ -200,8 +308,14 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Phí vận chuyển</span>
-            <span>Miễn phí</span>
+            <span>{feeLabel}</span>
           </div>
+          {shippingMethod === "delivery" && shippingFee > 0 && (
+            <div className="flex justify-between font-semibold text-ceramic-900">
+              <span>Tổng cộng</span>
+              <Money value={cart.data.total + shippingFee} />
+            </div>
+          )}
         </div>
         <button
           onClick={submitOrder}

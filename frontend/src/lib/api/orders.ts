@@ -7,6 +7,8 @@ export interface CreateOrderInput {
   receiver_name: string;
   receiver_phone: string;
   shipping_address: string;
+  shipping_method?: "pickup" | "delivery";
+  shipping_province?: string | null;
   anti_shock_packed?: boolean;
 }
 
