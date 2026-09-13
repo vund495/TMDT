@@ -64,7 +64,7 @@ export default function AccountPage() {
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Nguyễn Văn A"
+            placeholder="Nhập họ tên"
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
           />
         </label>
@@ -74,7 +74,7 @@ export default function AccountPage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             inputMode="tel"
-            placeholder="0912345678"
+            placeholder="Nhập số điện thoại"
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-dat-600 focus:outline-none focus:ring-2 focus:ring-dat-200"
           />
         </label>

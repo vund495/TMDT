@@ -52,9 +52,9 @@ export default function Register() {
         <p className="mt-1 text-sm text-ink-soft">Tạo tài khoản để mua sắm tại VietCraft Bát Tràng.</p>
 
         <div className="mt-5 space-y-3">
-          <Field label="Họ tên" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
-          <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-          <Field label="Số điện thoại" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09xxxxxxxx" />
+          <Field label="Họ tên" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập họ tên" />
+          <Field label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Nhập email" />
+          <Field label="Số điện thoại" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Nhập số điện thoại" />
           <Field
             label="Mật khẩu"
             type={showPwd ? "text" : "password"}

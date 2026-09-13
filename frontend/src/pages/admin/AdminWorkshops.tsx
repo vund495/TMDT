@@ -130,7 +130,7 @@ export default function AdminWorkshops() {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Lý do từ chối (sẽ hiện cho chủ xưởng) *"
+              placeholder="Nhập lý do từ chối"
               className="w-full rounded-md border border-gray-300 p-3 text-sm"
               rows={3}
             />

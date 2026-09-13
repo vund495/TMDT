@@ -62,7 +62,7 @@ export default function WorkshopProfile() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-            placeholder="VD: Gốm sứ Bát Tràng - Xưởng Hoàng Gia"
+            placeholder="Nhập tên xưởng"
           />
         </label>
         <label className="block text-sm">
@@ -80,7 +80,7 @@ export default function WorkshopProfile() {
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-            placeholder="VD: Bát Tràng, Gia Lâm, Hà Nội"
+            placeholder="Nhập địa chỉ"
           />
         </label>
         <label className="block text-sm">

@@ -105,7 +105,7 @@ export default function ClaimNew() {
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="VD: Sản phẩm bị vỡ vụn khi mở hộp, thùng bị móp méo..."
+              placeholder="Mô tả tình trạng vấn đề gặp phải"
               rows={4}
               className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-men-400 focus:outline-none focus:ring-2 focus:ring-men-100"
             />

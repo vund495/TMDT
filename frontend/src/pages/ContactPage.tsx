@@ -42,26 +42,26 @@ export default function ContactPage() {
       >        <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Họ tên *"
+          placeholder="Nhập họ tên"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           type="email"
-          placeholder="Email *"
+          placeholder="Nhập email"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="Chủ đề (tùy chọn)"
+          placeholder="Nhập chủ đề"
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Nội dung *"
+          placeholder="Nhập nội dung"
           className="w-full rounded-md border border-gray-300 p-3 text-sm"
           rows={4}
         />

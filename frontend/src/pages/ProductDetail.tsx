@@ -199,7 +199,7 @@ export default function ProductDetail() {
               <textarea
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Chia sẻ cảm nhận (bỏ trống nếu chỉ chấm sao)"
+                placeholder="Nhập cảm nhận của bạn (tùy chọn)"
                 className="mt-2 w-full rounded-md border border-gray-300 p-2 text-sm"
                 rows={2}
               />
@@ -234,7 +234,7 @@ export default function ProductDetail() {
               <input
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Viết bình luận..."
+                placeholder="Nhập bình luận"
                 className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
               <button type="submit" disabled={postComment.isPending} className="rounded-md bg-dat-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">

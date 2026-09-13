@@ -94,7 +94,7 @@ export default function WorkshopWallet() {
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="VD: BIDV"
+              placeholder="Nhập tên ngân hàng"
             />
           </label>
           <label className="block text-sm">
@@ -103,7 +103,7 @@ export default function WorkshopWallet() {
               value={bankAccountNo}
               onChange={(e) => setBankAccountNo(e.target.value)}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="VD: 7621982567"
+              placeholder="Nhập số tài khoản"
             />
           </label>
           <label className="block text-sm">
@@ -112,7 +112,7 @@ export default function WorkshopWallet() {
               value={bankAccountName}
               onChange={(e) => setBankAccountName(e.target.value)}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
-              placeholder="VD: Nguyen Duy Vu"
+              placeholder="Nhập tên chủ tài khoản"
             />
           </label>
         </div>

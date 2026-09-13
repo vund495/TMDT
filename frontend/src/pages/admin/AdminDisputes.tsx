@@ -111,7 +111,7 @@ export default function AdminDisputes() {
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ghi chú nội bộ (tùy chọn)"
+              placeholder="Nhập ghi chú nội bộ"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
             <div className="flex justify-end gap-2">

@@ -86,7 +86,7 @@ export default function PassportPage() {
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Nhập mã QR trên sản phẩm..."
+          placeholder="Nhập mã QR"
           className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <button className="rounded-md bg-dat-700 px-5 py-2 text-sm font-semibold text-white hover:bg-dat-800">

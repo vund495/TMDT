@@ -50,7 +50,7 @@ export default function Login() {
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Nhập email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={inputClass + " pl-9"}
@@ -60,7 +60,7 @@ export default function Login() {
             <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
             <input
               type={showPwd ? "text" : "password"}
-              placeholder="Password"
+              placeholder="Nhập mật khẩu"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => {

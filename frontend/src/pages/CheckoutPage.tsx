@@ -192,7 +192,7 @@ export default function CheckoutPage() {
                 label="Địa chỉ giao hàng"
                 value={shippingAddress}
                 onChange={(e) => setShippingAddress(e.target.value)}
-                placeholder="Số nhà, đường, phường/xã, quận/huyện"
+                placeholder="Nhập địa chỉ (số nhà, đường, phường/xã, quận/huyện)"
                 error={addressError}
               />
             </div>
@@ -206,14 +206,14 @@ export default function CheckoutPage() {
               label="Họ tên người nhận"
               value={receiverName}
               onChange={(e) => setReceiverName(e.target.value)}
-              placeholder="Nguyễn Văn An"
+              placeholder="Nhập họ tên người nhận"
               error={nameError}
             />
             <Field
               label="Số điện thoại"
               value={receiverPhone}
               onChange={(e) => setReceiverPhone(e.target.value)}
-              placeholder="09xx xxx xxx"
+              placeholder="Nhập số điện thoại"
               inputMode="tel"
               error={phoneError}
             />
@@ -230,7 +230,7 @@ export default function CheckoutPage() {
             label="Mã giảm giá"
             value={voucher}
             onChange={(e) => setVoucher(e.target.value.toUpperCase())}
-            placeholder="Nhập mã (VD: GIAM10)"
+            placeholder="Nhập mã giảm giá"
             input="uppercase"
             trailing={
               <button

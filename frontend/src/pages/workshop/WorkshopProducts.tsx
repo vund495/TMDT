@@ -217,19 +217,19 @@ export default function WorkshopProducts() {
             className="max-h-[90vh] w-full max-w-lg space-y-3 overflow-auto rounded-xl bg-white p-6"
           >
             <h2 className="text-lg font-bold text-ceramic-900">{editing ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}</h2>
-            <input value={form.name} onChange={set("name")} placeholder="Tên sản phẩm *" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
-            <textarea value={form.description} onChange={set("description")} placeholder="Mô tả" className="w-full rounded-md border border-gray-300 p-3 text-sm" rows={2} />
-            <div className="grid grid-cols-2 gap-3">
-              <input value={form.theme} onChange={set("theme")} placeholder="Chủ đề" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.material} onChange={set("material")} placeholder="Chất liệu" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.firing_technique} onChange={set("firing_technique")} placeholder="Kỹ thuật nung" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.glaze} onChange={set("glaze")} placeholder="Men" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.original_price} onChange={set("original_price")} type="number" placeholder="Giá gốc (VNĐ) *" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.sale_price} onChange={set("sale_price")} type="number" placeholder="Giá khuyến mãi" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.stock} onChange={set("stock")} type="number" placeholder="Tồn kho" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.video_url} onChange={set("video_url")} placeholder="Video URL" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+<input value={form.name} onChange={set("name")} placeholder="Nhập tên sản phẩm *" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+            <textarea value={form.description} onChange={set("description")} placeholder="Nhập mô tả" className="w-full rounded-md border border-gray-300 p-3 text-sm" rows={2} />
+            <div className="grid grid-cols-2 gap-2">
+              <input value={form.theme} onChange={set("theme")} placeholder="Nhập chủ đề" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.material} onChange={set("material")} placeholder="Nhập chất liệu" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.firing_technique} onChange={set("firing_technique")} placeholder="Nhập kỹ thuật nung" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.glaze} onChange={set("glaze")} placeholder="Nhập loại men" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.original_price} onChange={set("original_price")} type="number" placeholder="Nhập giá gốc (VNĐ) *" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.sale_price} onChange={set("sale_price")} type="number" placeholder="Giá khuyến mãi (tùy chọn)" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.stock} onChange={set("stock")} type="number" placeholder="Nhập tồn kho" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.video_url} onChange={set("video_url")} placeholder="Nhập video URL" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
             </div>
-            <input value={form.images} onChange={set("images")} placeholder="Ảnh URL (phân tách dấu phẩy)" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+            <input value={form.images} onChange={set("images")} placeholder="Nhập ảnh URL (phân tách bằng dấu phẩy)" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
             <div>
               <div className="flex flex-wrap gap-2">
                 {(form.images ? form.images.split(",").map((s) => s.trim()).filter(Boolean) : []).map((url, i) => (

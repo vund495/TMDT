@@ -67,14 +67,14 @@ export default function DisputesPage() {
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Mô tả tình trạng vỡ/hư hỏng, kèm lý do khiếu nại..."
+            placeholder="Mô tả tình trạng và lý do khiếu nại"
             className="w-full rounded-md border border-gray-300 p-3 text-sm"
             rows={3}
           />
           <input
             value={evidence}
             onChange={(e) => setEvidence(e.target.value)}
-            placeholder="URL ảnh minh chứng (phân tách bằng dấu phẩy, tùy chọn)"
+            placeholder="Nhập URL ảnh minh chứng (tùy chọn, phân tách bằng dấu phẩy)"
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
           <button

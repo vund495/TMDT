@@ -66,7 +66,7 @@ export default function AdminUsers() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Tìm email / tên / SĐT..."
+              placeholder="Tìm kiếm người dùng"
               className="w-72 rounded-md border border-gray-300 py-2 pl-9 pr-3 text-sm"
             />
           </div>

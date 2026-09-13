@@ -108,10 +108,10 @@ export default function AdminVouchers() {
             className="w-full max-w-md space-y-3 rounded-xl bg-white p-6"
           >
             <h2 className="font-bold text-gray-900">Tạo voucher mới</h2>
-            <input value={form.code} onChange={set("code")} placeholder="Mã (VD: GIAM10) *" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase" />
+            <input value={form.code} onChange={set("code")} placeholder="Nhập mã ưu đãi *" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm uppercase" />
             <div className="grid grid-cols-2 gap-3">
-              <input value={form.discount_percent} onChange={set("discount_percent")} type="number" placeholder="% giảm *" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
-              <input value={form.max_discount_amount} onChange={set("max_discount_amount")} type="number" placeholder="Giảm tối đa (₫)" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.discount_percent} onChange={set("discount_percent")} type="number" placeholder="Nhập % giảm *" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input value={form.max_discount_amount} onChange={set("max_discount_amount")} type="number" placeholder="Giảm tối đa (tùy chọn)" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
               <input value={form.valid_from} onChange={set("valid_from")} type="date" placeholder="Từ" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
               <input value={form.valid_until} onChange={set("valid_until")} type="date" placeholder="Đến" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
               <input value={form.usage_limit} onChange={set("usage_limit")} type="number" placeholder="Số lượt dùng" className="rounded-md border border-gray-300 px-3 py-2 text-sm" />
