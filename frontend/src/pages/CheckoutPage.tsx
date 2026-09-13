@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Field, Money, Spinner, toastError } from "../components/ui";
 import { createOrder, getCart, createVnpayPayment, validateVoucher, shippingQuote } from "../lib/api";
+import type { VoucherValidateResult } from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 import { VIETNAM_PROVINCES } from "../constants/provinces";
 
@@ -20,6 +21,7 @@ export default function CheckoutPage() {
   const [antiShock, setAntiShock] = useState(true);
   const [voucher, setVoucher] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState<VoucherValidateResult | null>(null);
   const [payMethod, setPayMethod] = useState<"vnpay" | "vietqr">("vnpay");
   const [tried, setTried] = useState(false);
   const phoneDigits = receiverPhone.replace(/\D/g, "");
@@ -44,11 +46,29 @@ export default function CheckoutPage() {
   });
   const shippingFee = shippingMethod === "pickup" ? 0 : (quote.data?.fee ?? 0);
 
+  const discount =
+    appliedVoucher?.valid
+      ? Math.min(
+          Math.floor((cartTotal * (appliedVoucher.discount_percent ?? 0)) / 100),
+          appliedVoucher.max_discount_amount ?? Number.POSITIVE_INFINITY,
+        )
+      : 0;
+  const grandTotal = cartTotal - discount + shippingFee;
+
   const checkVoucher = useMutation({
     mutationFn: () => validateVoucher(voucher),
-    onSuccess: (d) =>
-      setVoucherMsg(d.valid ? `${d.message} (giảm ${d.discount_percent}%)` : (d.message ?? "Mã không hợp lệ")),
-    onError: (e) => setVoucherMsg((e as Error).message),
+    onSuccess: (d) => {
+      setAppliedVoucher(d.valid ? d : null);
+      setVoucherMsg(
+        d.valid
+          ? `${d.message} (giảm ${d.discount_percent}%)`
+          : (d.message ?? "Mã không hợp lệ"),
+      );
+    },
+    onError: (e) => {
+      setAppliedVoucher(null);
+      setVoucherMsg((e as Error).message);
+    },
   });
 
   const placeOrder = useMutation({
@@ -229,7 +249,10 @@ export default function CheckoutPage() {
           <Field
             label="Mã giảm giá"
             value={voucher}
-            onChange={(e) => setVoucher(e.target.value.toUpperCase())}
+            onChange={(e) => {
+              setVoucher(e.target.value.toUpperCase());
+              setAppliedVoucher(null);
+            }}
             placeholder="Nhập mã giảm giá"
             input="uppercase"
             trailing={
@@ -310,12 +333,16 @@ export default function CheckoutPage() {
             <span className="text-gray-600">Phí vận chuyển</span>
             <span>{feeLabel}</span>
           </div>
-          {shippingMethod === "delivery" && shippingFee > 0 && (
-            <div className="flex justify-between font-semibold text-ceramic-900">
-              <span>Tổng cộng</span>
-              <Money value={cart.data.total + shippingFee} />
+          {discount > 0 && (
+            <div className="flex justify-between text-men-700">
+              <span>Giảm giá (mã {appliedVoucher?.code})</span>
+              <span>-<Money value={discount} /></span>
             </div>
           )}
+          <div className="flex justify-between border-t border-gray-100 pt-2 font-semibold text-ceramic-900">
+            <span>Tổng cộng</span>
+            <Money value={grandTotal} />
+          </div>
         </div>
         <button
           onClick={submitOrder}
