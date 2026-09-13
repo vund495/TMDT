@@ -12,15 +12,23 @@ FREE_SHIPPING_THRESHOLD = 500_000
 
 INTRA_PROVINCES_RAW = {"Hà Nội", "TP.Hồ Chí Minh", "TP. Hồ Chí Minh"}
 INTRA_PROVINCE_ALIASES = {
+    "hà nội": "Hà Nội",
     "hanoi": "Hà Nội",
     "ha noi": "Hà Nội",
+    "hồ chí minh": "TP.Hồ Chí Minh",
+    "tphồchíminh": "TP.Hồ Chí Minh",
+    "tp.hồchíminh": "TP.Hồ Chí Minh",
+    "tp.hồ chí minh": "TP.Hồ Chí Minh",
+    "hồchíminhcity": "TP.Hồ Chí Minh",
     "hcm": "TP.Hồ Chí Minh",
     "hcmc": "TP.Hồ Chí Minh",
+    "tphcm": "TP.Hồ Chí Minh",
     "tp.hcm": "TP.Hồ Chí Minh",
     "tp hcm": "TP.Hồ Chí Minh",
     "ho chi minh": "TP.Hồ Chí Minh",
+    "hochiminh": "TP.Hồ Chí Minh",
     "ho chi minh city": "TP.Hồ Chí Minh",
-    "tpHồ Chí Minh": "TP.Hồ Chí Minh",
+    "hochiminhcity": "TP.Hồ Chí Minh",
 }
 
 
