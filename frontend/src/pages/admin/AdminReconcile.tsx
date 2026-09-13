@@ -35,7 +35,7 @@ export default function AdminReconcile() {
       <h1 className="text-2xl font-bold text-gray-900">Đối soát doanh thu</h1>
       <p className="mt-1 text-sm text-gray-600">
         Kiểm tra tính nhất quán giữa doanh thu đã ghi nhận (revenue_records) và tổng đơn hàng hoàn tất
-        trên toàn sàn, sau đó chuyển tiền về cho xưởng theo từng kỳ.
+        trên toàn sàn, sau đó chi trả về cho xưởng theo từng kỳ.
       </p>
 
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5">
@@ -92,7 +92,7 @@ export default function AdminReconcile() {
       </div>
 
       <div className="mt-6">
-        <h2 className="text-sm font-semibold text-gray-900">Các kỳ chờ chuyển tiền</h2>
+        <h2 className="text-sm font-semibold text-gray-900">Các kỳ chờ chi trả</h2>
         {records.isLoading ? (
           <Spinner />
         ) : !records.data || records.data.length === 0 ? (
@@ -134,7 +134,7 @@ export default function AdminReconcile() {
                           disabled={markPaid.isPending}
                           className="rounded-md bg-green-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-800 disabled:opacity-50"
                         >
-                          Đã chuyển tiền
+                          Đã chi trả
                         </button>
                       ) : (
                         <span className="text-xs text-gray-400">Đã hoàn tất</span>

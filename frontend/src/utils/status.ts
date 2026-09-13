@@ -55,8 +55,8 @@ export const RESOLUTION_LABEL: Record<string, string> = {
 };
 
 export const PAYOUT_STATUS: Record<string, { label: string; tone: Tone }> = {
-  pending: map("Chưa chuyển tiền", "amber"),
-  paid: map("Đã chuyển tiền", "green"),
+  pending: map("Chờ chi trả", "amber"),
+  paid: map("Đã chi trả", "green"),
 };
 
 // map tone -> badge class
