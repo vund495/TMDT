@@ -339,7 +339,7 @@ export default function WorkshopProducts() {
                 {copied ? "Đã copy" : "Copy mã"}
               </button>
               <a
-                href={`http://localhost:5173/ho-chieu?code=${encodeURIComponent(qrFor.passport_qr)}`}
+                href={`/ho-chieu?code=${encodeURIComponent(qrFor.passport_qr)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-md border border-brand-lam px-4 py-2 text-center text-sm font-semibold text-brand-lam hover:bg-brand-lam/10"
