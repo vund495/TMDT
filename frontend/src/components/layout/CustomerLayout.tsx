@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Amphora, Bell, ShoppingCart } from "lucide-react";
+import { Amphora, Bell, Menu, ShoppingCart, X } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { getCart, listNotifications, markNotificationRead } from "../../lib/api";
 import { useLocalCart } from "../../store/localCartStore";
@@ -28,9 +28,27 @@ export default function CustomerLayout() {
   const isAuthed = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  // Đổi trang (kể cả back/forward) thì đóng mọi menu/drawer đang mở.
+  useEffect(() => {
+    setMobileOpen(false);
+    setMenuOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
+
+  // Chặn cuộn nền khi drawer mobile đang mở.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
 
   const notifQuery = useQuery({
     queryKey: ["notifications"],
@@ -63,12 +81,26 @@ export default function CustomerLayout() {
       <header
         className="sticky top-0 z-40 border-b border-border-soft bg-bg-paper backdrop-blur-md min-h-20 transition-height duration-fast"
       >
-        <div className="mx-auto flex h-16 w-full max-w-[1500px] items-center gap-4 px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-dat-700 text-white">
+        <div className="mx-auto flex h-16 w-full max-w-[1500px] items-center gap-2 px-4 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Mở menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav"
+            className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-ink hover:bg-cream-100 md:hidden"
+          >
+            <Menu className="h-5 w-5" aria-hidden />
+          </button>
+
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-dat-700 text-white">
               <Amphora className="h-5 w-5" aria-hidden />
             </span>
-            <span className="text-xl font-extrabold tracking-tight text-ink">VietCraft Bát Tràng</span>
+            <span className="whitespace-nowrap text-lg font-extrabold tracking-tight text-ink sm:text-xl">
+              <span className="sm:hidden">VietCraft</span>
+              <span className="hidden sm:inline">VietCraft Bát Tràng</span>
+            </span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -89,7 +121,7 @@ export default function CustomerLayout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             {isAuthed && (
               <div className="relative">
                 <button
@@ -107,7 +139,7 @@ export default function CustomerLayout() {
                 {notifOpen && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)} />
-                    <div className="absolute right-0 z-20 mt-2 w-96 overflow-hidden rounded-2xl border border-border-soft bg-white shadow-elevated">
+                    <div className="absolute right-0 z-20 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border-soft bg-white shadow-elevated">
                       <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
                         <p className="text-sm font-bold text-ink">Thông báo</p>
                         <Link
@@ -246,7 +278,7 @@ export default function CustomerLayout() {
             ) : (
               <Link
                 to="/dang-nhap"
-                className="rounded-md bg-men-700 px-4 py-2 text-sm font-semibold text-white hover:bg-men-800 transition-colors duration-fast"
+                className="whitespace-nowrap rounded-md bg-men-700 px-3 py-2 text-sm font-semibold text-white hover:bg-men-800 transition-colors duration-fast sm:px-4"
               >
                 Đăng nhập
               </Link>
@@ -275,10 +307,15 @@ export default function CustomerLayout() {
 
           <div>
             <p className="label-sm mb-3 text-ink-faint">Khám phá</p>
-            {["Sản phẩm", "Xưởng gốm", "Tour trải nghiệm", "Hộ chiếu QR"].map((x) => (
-              <p key={x} className="py-1 text-sm text-ink-soft hover:text-ink">
-                {x}
-              </p>
+            {[
+              { label: "Sản phẩm", to: "/tim-kiem" },
+              { label: "Xưởng gốm", to: "/xuong-gom" },
+              { label: "Tour trải nghiệm", to: "/tour" },
+              { label: "Hộ chiếu QR", to: "/ho-chieu" },
+            ].map((x) => (
+              <Link key={x.label} to={x.to} className="block py-1 text-sm text-ink-soft hover:text-ink">
+                {x.label}
+              </Link>
             ))}
           </div>
 
@@ -309,113 +346,131 @@ export default function CustomerLayout() {
       </footer>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 bg-ink/80 backdrop-blur-md">
-          <div className="absolute top-0 left-0 right-0 h-24 border-b border-border-soft bg-bg-paper">
-            <div className="mx-auto max-w-[1500px] h-full px-4 flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-dat-700 text-white">
+        <div
+          id="mobile-nav"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu điều hướng"
+          className="fixed inset-0 z-50 md:hidden"
+        >
+          <div
+            className="absolute inset-0 bg-ink/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col bg-bg-paper shadow-elevated">
+            <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border-soft px-4">
+              <Link
+                to="/"
+                onClick={() => setMobileOpen(false)}
+                className="flex min-w-0 items-center gap-2"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-dat-700 text-white">
                   <Amphora className="h-4 w-4" aria-hidden />
                 </span>
-                <span className="text-xl font-extrabold tracking-tight text-ink">VietCraft Bát Tràng</span>
+                <span className="truncate text-base font-extrabold tracking-tight text-ink">
+                  VietCraft Bát Tràng
+                </span>
               </Link>
               <button
+                type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-ink hover:bg-cream-100"
+                aria-label="Đóng menu"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-ink hover:bg-cream-100"
               >
-                Đóng
+                <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
-          </div>
-          <div className="pt-6 pb-8 overflow-y-auto">
-            <nav className="space-y-3">
-              {NAV_MOBILE.map((n) => (
-                <Link
-                  key={n.to}
-                  to={n.to}
-                  className="block px-4 py-2 rounded-md text-lg font-medium text-ink hover:bg-cream-50 transition-colors duration-fast"
-                >
-                  {n.label}
-                </Link>
-              ))}
-            </nav>
-            {currentUser ? (
-              <div className="mt-8 pt-8 border-t border-border-soft">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-men-700 text-sm text-white">
-                    {(currentUser.full_name || "?").slice(0, 1)}
-                  </span>
-                  <span className="font-medium text-ink">{currentUser.full_name || ""}</span>
-                </div>
-                <p className="text-xs text-ink-faint">{currentUser.email || ""}</p>
-                <div className="mt-4 space-y-2">
+
+            <div className="flex-1 overflow-y-auto px-3 py-4">
+              <nav className="space-y-1">
+                {NAV_MOBILE.map((n) => (
                   <Link
-                    to="/tai-khoan"
-                    className="block px-4 py-2 rounded-md text-sm text-ink hover:bg-cream-50"
+                    key={n.to}
+                    to={n.to}
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-md px-3 py-3 text-base font-semibold text-ink transition-colors duration-fast hover:bg-cream-100"
                   >
-                    Tài khoản
+                    {n.label}
                   </Link>
-                  <Link
-                    to="/don-hang"
-                    className="block px-4 py-2 rounded-md text-sm text-ink hover:bg-cream-50"
-                  >
-                    Đơn hàng
-                  </Link>
-                  <Link
-                    to="/tour-cua-toi"
-                    className="block px-4 py-2 rounded-md text-sm text-ink hover:bg-cream-50"
-                  >
-                    Tour của tôi
-                  </Link>
-                  <Link
-                    to="/khieu-nai"
-                    className="block px-4 py-2 rounded-md text-sm text-ink hover:bg-cream-50"
-                  >
-                    Khiếu nại
-                  </Link>
-                  {currentUser.role === "workshop_owner" && (
-                    <Link
-                      to="/xuong"
-                      className="block px-4 py-2 rounded-md text-sm text-ink hover:bg-cream-50"
+                ))}
+              </nav>
+
+              {currentUser ? (
+                <div className="mt-6 border-t border-border-soft pt-6">
+                  <div className="flex items-center gap-2 px-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-men-700 text-sm text-white">
+                      {(currentUser.full_name || "?").slice(0, 1)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink">{currentUser.full_name || ""}</p>
+                      <p className="truncate text-xs text-ink-faint">{currentUser.email || ""}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-1">
+                    {[
+                      { label: "Tài khoản", to: "/tai-khoan" },
+                      { label: "Đơn hàng", to: "/don-hang" },
+                      { label: "Tour của tôi", to: "/tour-cua-toi" },
+                      { label: "Khiếu nại", to: "/khieu-nai" },
+                    ].map((x) => (
+                      <Link
+                        key={x.to}
+                        to={x.to}
+                        onClick={() => setMobileOpen(false)}
+                        className="block rounded-md px-3 py-2.5 text-sm font-medium text-ink hover:bg-cream-100"
+                      >
+                        {x.label}
+                      </Link>
+                    ))}
+                    {currentUser.role === "workshop_owner" && (
+                      <Link
+                        to="/xuong"
+                        onClick={() => setMobileOpen(false)}
+                        className="block rounded-md px-3 py-2.5 text-sm font-medium text-dat-700 hover:bg-cream-100"
+                      >
+                        Vào khu xưởng →
+                      </Link>
+                    )}
+                    {currentUser.role === "admin" && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setMobileOpen(false)}
+                        className="block rounded-md px-3 py-2.5 text-sm font-medium text-dat-700 hover:bg-cream-100"
+                      >
+                        Vào khu quản trị →
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        logout();
+                        setMobileOpen(false);
+                        navigate("/");
+                      }}
+                      className="mt-2 w-full rounded-md px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
                     >
-                      Vào khu xưởng →
-                    </Link>
-                  )}
-                  {currentUser.role === "admin" && (
-                    <Link
-                      to="/admin"
-                      className="block px-4 py-2 rounded-md text-sm text-ink hover:bg-cream-50"
-                    >
-                      Vào khu quản trị →
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => {
-                      logout();
-                      setMobileOpen(false);
-                      navigate("/");
-                    }}
-                    className="w-full px-4 py-3 rounded-md text-left text-sm font-medium text-red-600 hover:bg-red-50"
-                  >
-                    Đăng xuất
-                  </button>
+                      Đăng xuất
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mt-8 pt-8">
-                <Link
-                  to="/dang-nhap"
-                  className="w-full px-4 py-3 rounded-md bg-men-700 text-lg text-white text-center font-semibold hover:bg-men-800 transition-colors duration-fast"
-                >
-                  Đăng nhập
-                </Link>
-                <Link
-                  to="/dang-ky"
-                  className="w-full px-4 py-3 rounded-md border border-border-soft text-lg text-ink text-center font-medium hover:bg-cream-50 transition-colors duration-fast"
-                >
-                  Đăng ký
-                </Link>
-              </div>
-            )}
+              ) : (
+                <div className="mt-6 space-y-2 border-t border-border-soft px-3 pt-6">
+                  <Link
+                    to="/dang-nhap"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full rounded-md bg-men-700 px-4 py-3 text-center text-base font-semibold text-white transition-colors duration-fast hover:bg-men-800"
+                  >
+                    Đăng nhập
+                  </Link>
+                  <Link
+                    to="/dang-ky"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full rounded-md border border-border-soft px-4 py-3 text-center text-base font-medium text-ink transition-colors duration-fast hover:bg-cream-50"
+                  >
+                    Đăng ký
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

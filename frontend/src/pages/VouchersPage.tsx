@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Amphora, ScanLine, Ticket } from "lucide-react";
 import { myVouchers } from "../lib/api";
 import { Money, Spinner } from "../components/ui";
+import { useAuthStore } from "../store/authStore";
 
 export default function VouchersPage() {
-  const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: myVouchers });
+  const isAuthed = useAuthStore((s) => s.isAuthenticated);
+  const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: myVouchers, enabled: isAuthed });
 
   return (
     <div className="mx-auto max-w-xl">
@@ -16,7 +18,15 @@ export default function VouchersPage() {
 
       <div className="mt-6 rounded-xl border border-ceramic-100 bg-white p-6">
         <h2 className="font-semibold text-ceramic-900">Voucher của tôi</h2>
-        {vouchers.isLoading ? (
+        {!isAuthed ? (
+          <p className="mt-3 text-sm text-gray-500">
+            Vui lòng{" "}
+            <Link to="/dang-nhap" className="font-semibold text-dat-700 hover:underline">
+              đăng nhập
+            </Link>{" "}
+            để xem voucher của bạn.
+          </p>
+        ) : vouchers.isLoading ? (
           <Spinner />
         ) : vouchers.isError ? (
           <p className="mt-3 text-sm text-red-600">Không tải được danh sách voucher.</p>

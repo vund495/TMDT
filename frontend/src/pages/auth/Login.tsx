@@ -45,7 +45,13 @@ export default function Login() {
           <p className="mt-1 text-sm text-ink-soft">Nhập email và mật khẩu để tiếp tục</p>
         </div>
 
-        <div className="mt-5 space-y-3">
+        <form
+          className="mt-5 space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            doLogin();
+          }}
+        >
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
             <input
@@ -63,9 +69,6 @@ export default function Login() {
               placeholder="Nhập mật khẩu"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") doLogin();
-              }}
               className={inputClass + " pl-9 pr-10"}
             />
             <button
@@ -79,10 +82,10 @@ export default function Login() {
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          <Button block onClick={doLogin} disabled={busy}>
+          <Button type="submit" block disabled={busy}>
             {busy ? "Đang đăng nhập…" : "Đăng nhập"}
           </Button>
-        </div>
+        </form>
 
         <p className="mt-4 text-center text-sm text-ink-soft">
           Chưa có tài khoản?{" "}

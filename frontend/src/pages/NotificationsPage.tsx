@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { EmptyState, Spinner } from "../components/ui";
 import { listNotifications, listNews, markNotificationRead } from "../lib/api";
+import { useAuthStore } from "../store/authStore";
 import { cn } from "../utils/ui";
 
 const TABS = [
@@ -13,11 +15,14 @@ const TABS = [
 export default function NotificationsPage() {
   const [tab, setTab] = useState("all");
   const qc = useQueryClient();
+  const isAuthed = useAuthStore((s) => s.isAuthenticated);
 
+  // Tab "Tất cả" cần token -> khách chưa đăng nhập thì không gọi API (tránh 401).
   const query = useQuery({
     queryKey: ["notifications", tab],
     queryFn: () =>
       tab === "news" ? listNews() : listNotifications(),
+    enabled: tab === "news" || isAuthed,
   });
 
   const markRead = useMutation({
@@ -47,7 +52,13 @@ export default function NotificationsPage() {
       </div>
 
       <div className="mt-5">
-        {query.isLoading ? (
+        {tab === "all" && !isAuthed ? (
+          <EmptyState
+            icon={<Bell className="h-12 w-12" />}
+            title="Đăng nhập để xem thông báo"
+            hint="Thông báo về đơn hàng, tour và khiếu nại chỉ hiển thị với tài khoản của bạn."
+          />
+        ) : query.isLoading ? (
           <Spinner />
         ) : query.isError ? (
           <p className="text-red-600">Không tải được thông báo.</p>
