@@ -1,10 +1,10 @@
 name: PR Preview
 
-# Tìm URL preview mà Render tạo cho PR (service preview của vietcraft-frontend)
+# Tìm URL preview mà Render tạo cho PR (service preview của vietcraft-shop)
 # rồi comment link + trạng thái vào PR. Render đã tự tạo GitHub Deployment cho PR,
 # workflow này chỉ gom link về một chỗ cho dễ bấm.
 #
-# Điều kiện: Render Dashboard → vietcraft-frontend → tab "Previews" →
+# Điều kiện: Render Dashboard → vietcraft-shop → tab "Previews" →
 #   Pull Request Previews = Automatic  (hoặc Manual + label "render-preview")
 # Static site free => PR preview cũng free.
 on:
@@ -88,7 +88,7 @@ jobs:
 
           Chưa tìm thấy preview environment cho commit \`${SHA:0:7}\`.
 
-          - Kiểm tra Render → **vietcraft-frontend** → tab **Previews**: đã bật *Pull Request Previews* chưa?
+          - Kiểm tra Render → **vietcraft-shop** → tab **Previews**: đã bật *Pull Request Previews* chưa?
           - Nếu để chế độ **Manual**: thêm label **render-preview** (hoặc sửa tiêu đề PR thành \`[render preview] ...\`) rồi push lại.
           - Build preview (static) thường mất 1–3 phút, workflow này chờ tối đa ~10 phút.
 

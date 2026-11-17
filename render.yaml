@@ -10,9 +10,9 @@
 #
 # PR PREVIEW (xem UI trước khi merge):
 #  - Đang dùng SERVICE PREVIEW của static site (miễn phí với static site free):
-#    Render Dashboard → vietcraft-frontend → tab "Previews" → Pull Request Previews
+#    Render Dashboard → vietcraft-shop → tab "Previews" → Pull Request Previews
 #    = Automatic (hoặc Manual + label "render-preview" / "[render preview]").
-#    Mỗi PR có URL riêng: https://vietcraft-frontend-pr-<số-PR>.onrender.com
+#    Mỗi PR có URL riêng: https://vietcraft-shop-pr-<số-PR>.onrender.com
 #  - Blueprint "Preview Environments" (cả stack backend + DB) thì KHÔNG dùng được:
 #    Render yêu cầu workspace Pro trở lên. Khi nâng cấp Pro thì bỏ comment khối
 #    `previews:` dưới đây (và đặt previews.plan cho từng service nếu cần).
@@ -69,7 +69,7 @@ services:
 
 # Frontend không tạo qua Blueprint (Render chưa hỗ trợ "static" trong Blueprint).
 # Tạo thủ công: Render => New + => Static Site => chọn repo =>
-#   Name          : vietcraft-frontend  (URL sẽ là https://vietcraft-frontend.onrender.com)
+#   Name          : vietcraft-shop  (URL sẽ là https://vietcraft-shop.onrender.com)
 #   Build Command : npm ci && npm run build
 #   Publish Dir   : dist
 #   Env           : VITE_API_BASE_URL = https://vietcraft-backend.onrender.com

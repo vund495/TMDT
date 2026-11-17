@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FRONTEND_URL: https://vietcraft-frontend.onrender.com
+  FRONTEND_URL: https://vietcraft-shop.onrender.com
   BACKEND_URL: https://vietcraft-backend.onrender.com
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
        github.event.workflow_run.event == 'push')
     environment:
       name: production
-      url: https://vietcraft-frontend.onrender.com
+      url: https://vietcraft-shop.onrender.com
     steps:
       - name: Deploy backend
         id: backend

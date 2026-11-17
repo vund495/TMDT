@@ -22,13 +22,13 @@ main + CI xanh ──► CD ──► Render Deploy Hook (backend, frontend) ─
 
 ## 1. Việc phải làm 1 lần trên Render
 
-1. Vào **từng service** (`vietcraft-backend`, `vietcraft-frontend`) →
+1. Vào **từng service** (`vietcraft-backend`, `vietcraft-shop`) →
    **Settings → Build & Deploy → Auto-Deploy** = **Off**.
    Nếu để On, mỗi lần push sẽ deploy 2 lần (Render tự deploy + hook của CD).
    (Cách khác không cần secret: để **On + Checks Pass** và bật required status check `CI` — khi đó không cần `deploy.yml`.)
 2. Cùng trang **Settings**, mục **Deploy Hook** → copy URL:
    - `vietcraft-backend` → `RENDER_BACKEND_DEPLOY_HOOK`
-   - `vietcraft-frontend` → `RENDER_FRONTEND_DEPLOY_HOOK`
+   - `vietcraft-shop` → `RENDER_FRONTEND_DEPLOY_HOOK`
 
 ## 2. Việc phải làm 1 lần trên GitHub
 
@@ -37,7 +37,7 @@ main + CI xanh ──► CD ──► Render Deploy Hook (backend, frontend) ─
 | Secret | Giá trị |
 | --- | --- |
 | `RENDER_BACKEND_DEPLOY_HOOK` | Deploy Hook URL của `vietcraft-backend` |
-| `RENDER_FRONTEND_DEPLOY_HOOK` | Deploy Hook URL của `vietcraft-frontend` |
+| `RENDER_FRONTEND_DEPLOY_HOOK` | Deploy Hook URL của `vietcraft-shop` |
 
 (Secrets cũ dùng cho backup: `SUPABASE_DATABASE_URL` — giữ nguyên.)
 
@@ -59,22 +59,22 @@ Như vậy không ai merge được code đỏ vào `main`, và `main` luôn dep
 Vite **bake** `VITE_API_BASE_URL` vào bundle **lúc build**, không đọc lúc runtime:
 
 - CI build với `VITE_API_BASE_URL=https://vietcraft-backend.onrender.com` (khai báo trong `ci.yml`).
-- Render static site cũng cần biến này (Render → `vietcraft-frontend` → Environment) với cùng giá trị.
+- Render static site cũng cần biến này (Render → `vietcraft-shop` → Environment) với cùng giá trị.
 - Đổi URL backend ⇒ sửa ở **cả 3 chỗ**: `ci.yml`, Render env, và `render.yaml` (comment) → sau đó deploy lại.
 
 ## 5. PR Preview — xem UI trước khi merge
 
-**Dùng gì:** *Service Previews (PR Previews)* của Render cho static site `vietcraft-frontend`.
+**Dùng gì:** *Service Previews (PR Previews)* của Render cho static site `vietcraft-shop`.
 Render tính giá preview theo base service ⇒ base là **static site free** thì PR preview **cũng free**.
 
-**Bật 1 lần:** Render Dashboard → `vietcraft-frontend` → tab **Previews** → *Pull Request Previews*:
+**Bật 1 lần:** Render Dashboard → `vietcraft-shop` → tab **Previews** → *Pull Request Previews*:
 
 | Chế độ | Cách dùng |
 | --- | --- |
 | **Automatic** | mọi PR vào `main` đều có preview |
 | **Manual** | thêm label **`render-preview`** (hoặc `[render preview]` trong tiêu đề PR) khi muốn preview |
 
-Mỗi PR có URL riêng: `https://vietcraft-frontend-pr-<số-PR>.onrender.com` (Render cũng tạo
+Mỗi PR có URL riêng: `https://vietcraft-shop-pr-<số-PR>.onrender.com` (Render cũng tạo
 GitHub *Deployment* gắn với PR). Preview **tự xoá** khi PR merge/close.
 
 **Workflow `preview.yml`** không tạo preview (Render tự làm) — nó:
@@ -92,7 +92,7 @@ GitHub *Deployment* gắn với PR). Preview **tự xoá** khi PR merge/close.
 
 Instance free bị sleep/suspend thì không mất code, nhưng nên deploy lại để chắc chắn asset khớp:
 
-1. Render → `vietcraft-frontend` → **Manual Deploy → Clear build cache & deploy**.
+1. Render → `vietcraft-shop` → **Manual Deploy → Clear build cache & deploy**.
 2. Render → `vietcraft-backend` → **Manual Deploy** (Docker image được build lại, `alembic upgrade head` chạy lại khi container start).
 3. Kiểm tra: `https://vietcraft-backend.onrender.com/health` và mở trang chủ, thử resize về 390px xem menu mobile.
 
@@ -119,7 +119,7 @@ npm run build
 | --- | --- |
 | CD báo warning `Chưa có secret RENDER_*_DEPLOY_HOOK` | Chưa thêm secret ở mục 2 (workflow vẫn xanh, chỉ bỏ qua trigger) |
 | Mỗi lần push thấy 2 deploy trên Render | Chưa tắt Auto-Deploy của service (mục 1) |
-| PR không có preview | Chưa bật *Pull Request Previews* ở tab Previews của `vietcraft-frontend`, hoặc đang để *Manual* mà PR chưa có label `render-preview` |
+| PR không có preview | Chưa bật *Pull Request Previews* ở tab Previews của `vietcraft-shop`, hoặc đang để *Manual* mà PR chưa có label `render-preview` |
 | Comment của `preview.yml` ghi "Chưa tìm thấy preview" | Preview build > 10 phút (hiếm), hoặc PR từ fork, hoặc Render chưa tạo deployment — mở tab **Previews** trên Render để xem trực tiếp |
 | Frontend deploy xong vẫn gọi API cũ | `VITE_API_BASE_URL` sai hoặc thiếu → build lại (biến chỉ có tác dụng lúc build) |
 | Bước "Chờ backend healthy" fail | Xem log deploy backend trên Render (thường do `DATABASE_URL` Supabase sai/hết hạn, hoặc migration lỗi) |
