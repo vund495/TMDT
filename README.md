@@ -35,6 +35,17 @@ pytest                        npm run typecheck
 
 > Báo "hoàn thành" khi cả 3 lệnh đều pass (+ E2E thật qua Swagger nếu liên quan nghiệp vụ).
 
+## CI/CD (GitHub Actions + Render)
+
+| Workflow | Việc làm |
+|---|---|
+| `.github/workflows/ci.yml` | push/PR: pytest · `alembic upgrade head` trên Postgres 16 · typecheck + build frontend · build thử Docker image |
+| `.github/workflows/deploy.yml` | CI xanh trên `main`: gọi Deploy Hook Render (backend + frontend) → chờ `/health` = 200 → kiểm tra frontend phục vụ bundle mới |
+
+Cần 2 secret `RENDER_BACKEND_DEPLOY_HOOK`, `RENDER_FRONTEND_DEPLOY_HOOK` và tắt Auto-Deploy trên Render để không deploy 2 lần.
+PR Preview: bật *Pull Request Previews* cho `vietcraft-frontend` (static site free ⇒ preview free), workflow `.github/workflows/preview.yml` tự comment link preview vào PR.
+Checklist chi tiết: [docs/CI-CD.md](docs/CI-CD.md).
+
 ## Cấu trúc (tóm tắt)
 
 ```

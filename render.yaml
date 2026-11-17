@@ -7,6 +7,19 @@
 #    VITE_API_BASE_URL rồi redeploy.
 #  - UPLOADS_DIR nên trỏ vào Disk mount (Render plan >= Starter) để ảnh upload
 #    không biến mất khi redeploy. Với plan free, file sẽ mất theo instance.
+#
+# PR PREVIEW (xem UI trước khi merge):
+#  - Đang dùng SERVICE PREVIEW của static site (miễn phí với static site free):
+#    Render Dashboard → vietcraft-frontend → tab "Previews" → Pull Request Previews
+#    = Automatic (hoặc Manual + label "render-preview" / "[render preview]").
+#    Mỗi PR có URL riêng: https://vietcraft-frontend-pr-<số-PR>.onrender.com
+#  - Blueprint "Preview Environments" (cả stack backend + DB) thì KHÔNG dùng được:
+#    Render yêu cầu workspace Pro trở lên. Khi nâng cấp Pro thì bỏ comment khối
+#    `previews:` dưới đây (và đặt previews.plan cho từng service nếu cần).
+#
+# previews:
+#   generation: automatic      # hoặc manual: thêm "[render preview]" vào tiêu đề PR
+#   expireAfterDays: 7
 
 services:
   - type: web
@@ -17,6 +30,9 @@ services:
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /health
+    # Deploy do GitHub Actions (.github/workflows/deploy.yml) gọi Deploy Hook sau khi CI xanh.
+    # Muốn quay lại deploy tự động mỗi lần push: đổi thành "commit" (hoặc "checksPass").
+    autoDeployTrigger: off
     buildFilter:
       paths:
         - backend/**
@@ -57,3 +73,10 @@ services:
 #   Build Command : npm ci && npm run build
 #   Publish Dir   : dist
 #   Env           : VITE_API_BASE_URL = https://vietcraft-backend.onrender.com
+#
+# CI/CD (GitHub Actions): .github/workflows/ci.yml (pytest + migration + typecheck/build)
+#   → .github/workflows/deploy.yml gọi Deploy Hook của 2 service khi CI xanh trên main.
+#   => Trên Dashboard đặt Auto-Deploy của CẢ HAI service thành "Off"
+#      (Settings → Build & Deploy), rồi dán Deploy Hook URL vào GitHub Secrets.
+#   => Sau khi Resume service bị suspend (free tier): bấm "Manual Deploy →
+#      Clear build cache & deploy" cho frontend để asset/bundle được build lại.

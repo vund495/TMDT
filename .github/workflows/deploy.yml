@@ -1,0 +1,90 @@
+name: CD · Deploy Render
+
+# Chỉ deploy khi CI xanh trên main (hoặc bấm tay "Run workflow").
+# Cần 2 secret: RENDER_BACKEND_DEPLOY_HOOK, RENDER_FRONTEND_DEPLOY_HOOK
+# (Render Dashboard → service → Settings → Deploy Hook).
+# Chưa thêm secret thì workflow chỉ cảnh báo và bỏ qua bước deploy (Render vẫn tự
+# deploy nếu Auto-Deploy còn bật) — không làm đỏ PR/push.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  FRONTEND_URL: https://vietcraft-frontend.onrender.com
+  BACKEND_URL: https://vietcraft-backend.onrender.com
+
+jobs:
+  deploy:
+    name: Trigger + verify
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    environment:
+      name: production
+      url: https://vietcraft-frontend.onrender.com
+    steps:
+      - name: Deploy backend
+        id: backend
+        env:
+          HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::Chưa có secret RENDER_BACKEND_DEPLOY_HOOK — bỏ qua trigger (xem docs/CI-CD.md)."
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" -o /dev/null -w "backend deploy hook: HTTP %{http_code}\n"
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy frontend
+        id: frontend
+        env:
+          HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::Chưa có secret RENDER_FRONTEND_DEPLOY_HOOK — bỏ qua trigger (xem docs/CI-CD.md)."
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" -o /dev/null -w "frontend deploy hook: HTTP %{http_code}\n"
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Chờ backend healthy (tối đa ~8 phút, free tier cold start)
+        run: |
+          for i in $(seq 1 32); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$BACKEND_URL/health" || echo 000)
+            echo "lần $i: /health → $code"
+            if [ "$code" = "200" ]; then
+              echo "Backend healthy."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Backend không healthy sau 8 phút — xem log deploy trên Render."
+          exit 1
+
+      - name: Kiểm tra frontend phục vụ HTML + bundle
+        run: |
+          curl -fsS --max-time 60 "$FRONTEND_URL/" -o index.html
+          head -c 300 index.html
+          echo
+          grep -q 'id="root"' index.html
+          grep -q 'src="/assets/index-' index.html
+          echo "Frontend OK."
+
+      - name: Nhắc việc còn lại
+        if: steps.backend.outputs.deployed == 'false' || steps.frontend.outputs.deployed == 'false'
+        run: |
+          echo "::notice::Deploy hook chưa được cấu hình. Thêm 2 secret RENDER_*_DEPLOY_HOOK và tắt Auto-Deploy trên Render (docs/CI-CD.md mục 1–2)."
